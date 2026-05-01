@@ -1,0 +1,14 @@
+# Secrets and Credentials
+secrets/
+.env*
+*.txt
+*.json
+
+# Binaries
+bin/
+
+# Logs
+*.log
+
+# Mac OS
+.DS_Store

@@ -1,0 +1,8 @@
+# Python dependencies
+venv/
+__pycache__/
+*.pyc
+
+# Scraper Data
+data/
+logs/

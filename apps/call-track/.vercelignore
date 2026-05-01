@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+dist
+*.log
+.vercel
+.git
+.gitignore
+README.md
+LICENSE
+supabase_schema.sql
+src-tauri
+target
+public/icons
