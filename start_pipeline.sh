@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# start_pipeline.sh
+# start_pipeline.sh (V2.0 - Seven Factor Hub)
 # -----------------
 # Automatización de arranque para el ecosistema PipeLine usando tmux.
 

@@ -69,6 +69,89 @@ app.get('/api/client/:clientId', async (req, res) => {
     }
 });
 
+// --- KANBAN & SUGGESTED LEADS API ---
+
+app.get('/api/leads/suggested', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('clients')
+            .select('*')
+            .eq('is_board_suggested', true)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/leads/suggested/:id/ignore', async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('clients')
+            .update({ is_board_suggested: false })
+            .eq('id', req.params.id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/leads/suggested/:id/approve', async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('clients')
+            .update({ 
+                status: 'FABRICA', 
+                is_board_suggested: false,
+                board_moved_at: new Date().toISOString()
+            })
+            .eq('id', req.params.id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/kanban/cards', async (req, res) => {
+    try {
+        const kanbanStatuses = ['FABRICA', 'COBRANZA', 'LIQUIDADO', 'CANCELADO'];
+        const { data, error } = await supabase
+            .from('clients')
+            .select('*')
+            .in('status', kanbanStatuses)
+            .order('board_moved_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.patch('/api/client/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const { error } = await supabase
+            .from('clients')
+            .update({ 
+                status, 
+                board_moved_at: new Date().toISOString() 
+            })
+            .eq('id', req.params.id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Endpoint para servir archivos multimedia (audio/imágenes)
 app.get('/api/media/:folder/:filename', (req, res) => {
     const { folder, filename } = req.params;

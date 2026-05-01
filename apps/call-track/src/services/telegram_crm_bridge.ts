@@ -99,7 +99,8 @@ export async function initiateTakeoverBridge(
     );
 
     // 5. Crear Topic en Telegram
-    const topicName = phoneDisplay.length === 10 ? `+52${phoneDisplay}` : `+${phoneDisplay}`;
+    // Prioridad: nombre_negocio (si existe) -> name (nombre del taller) -> teléfono
+    const topicName = (client as any).nombre_negocio || client.name || `+${phoneDisplay}`;
     const threadId = await createForumTopic(topicName);
 
     if (!threadId) {

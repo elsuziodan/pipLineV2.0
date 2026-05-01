@@ -1,9 +1,10 @@
-# SKILL: Project Startup & Operation Guide
+# SKILL: Project Startup & Operation Guide (V2.0)
 
-This document defines the standard operating procedure for starting the PipeLine ecosystem in its optimized structure.
+This document defines the standard operating procedure for starting the **Seven Factor** ecosystem.
 
 ## 1. Prerequisites
 - **Environment Variables**: Ensure `.env` files in `apps/call-track` and `apps/dashboard` are populated.
+- **Database**: The master schema is located in `docs/database/FULL_SCHEMA.sql`.
 - **Secrets**: API keys are located in `/secrets/`.
 - **Binaries**: `ngrok` is located in `/bin/`.
 
@@ -12,21 +13,23 @@ This document defines the standard operating procedure for starting the PipeLine
 To start the entire ecosystem at once in a managed `tmux` session:
 - **Command**: `./start_pipeline.sh`
 - **Management**:
-    - **View logs**: `tmux attach -t pipeline` (This opens the dashboard with all 3 services).
-    - **Detach**: `Ctrl+B`, then `D` (Closes the view but keeps everything running).
+    - **View logs**: `tmux attach -t pipeline` (Opens a 3-pane layout).
+    - **Detach**: `Ctrl+B`, then `D` (Keeps everything running).
     - **Stop everything**: `tmux kill-session -t pipeline`
 
-## 3. Manual Startup Sequence (Optional)
-If you prefer manual control or the script fails:
+## 3. Operational Areas
 
-### Step 1: External Tunnel (Ngrok)
-- **Command**: `./bin/ngrok http 3000`
+### A. Production Board (Root: `/`)
+- **Suggested Inbox**: Process leads warmed by Sebastian.
+- **Kanban**: Drag cards to track "Fábrica" → "Cobranza" → "Liquidado".
+- **New Project**: Use the search dialog to manually add clients to the board.
 
-### Step 2: Backend & WhatsApp Agent (Call-Track)
-- **Command**: `cd apps/call-track && npm run start`
+### B. AI Audit (Route: `/auditoria-ia`)
+- Legacy WhatsApp chat interface to monitor Sebastian's real-time interactions.
 
-### Step 3: Frontend Dashboard
-- **Command**: `cd apps/dashboard && PORT=3001 npm run dev`
+### C. Backend & CRM Bridge
+- The backend automatically synchronizes WhatsApp messages with Telegram Topics.
+- **Topic Naming**: Uses the business name from Supabase for parity with the dashboard.
 
 ## 4. Scrapper Operation
 To run a batch of city extractions:
@@ -34,9 +37,8 @@ To run a batch of city extractions:
 - **Command**: `./batch_automotriz.sh`
 
 ## 5. Troubleshooting
-- **Port Conflicts**: If port 3000 is busy, use `fuser -k 3000/tcp` to clear it.
-- **Venv Issues**: If Python throws "bad marshal data", delete `__pycache__` folders:
-  `find apps/scrapper/venv -name "__pycache__" -type d -exec rm -rf {} +`
+- **Port Conflicts**: Port 3000 (Backend) and 3001 (Dashboard).
+- **Manual Reset**: If the board is out of sync, the dashboard refreshes automatically every 30s.
 
 ---
-*Created on 2026-05-01 by Antigravity*
+*Updated on May 1st, 2026, for the Production Hub Redesign.*
