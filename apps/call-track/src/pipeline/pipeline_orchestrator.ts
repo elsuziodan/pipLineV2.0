@@ -9,6 +9,7 @@ import {
   type GateDecisionEvent,
   type PipelineStatusEvent,
 } from './pipeline_events.js';
+import type { AuditResult } from './ai_supervisor.js';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -182,7 +183,7 @@ class PipelineOrchestrator {
 
     // ── Gate A ──────────────────────────────────────────────────────────────
     let approved = false;
-    let auditResult = { score: 0, issues: [], recommendation: '', approved: false };
+    let auditResult: AuditResult = { score: 0, issues: [], recommendation: '', approved: false };
 
     if (runAudit) {
       this.setState('GATE_A', 'Scraper completado. Iniciando auditoría de calidad (Gate A)...');

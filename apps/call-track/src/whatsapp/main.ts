@@ -77,10 +77,6 @@ async function start() {
 
     console.log(`🎛️ Dashboard: Configura NEXT_PUBLIC_API_URL para apuntar al puerto ${process.env.PORT || 3000}`);
     console.log(`🔌 WebSocket adjuntado al servidor HTTP principal (puerto ${process.env.PORT || 3000})`);
-    
-    // FORZAR ARRANQUE INMEDIATO (User request: "mandalo directo")
-    console.log('🚀 [Antigravity] Forzando arranque inmediato del bot...');
-    triggerAgentLoop(true);
 }
 
 start().catch(err => {

@@ -5,10 +5,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card } from "./Card";
 import { cn } from "@/lib/utils";
 
+import * as React from "react";
+
 interface ColumnProps {
   id: string;
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   cards: any[];
 }
 
@@ -36,23 +38,23 @@ export function Column({ id, title, icon, cards }: ColumnProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex flex-col w-80 h-full bg-zinc-950/50 border-r border-zinc-800",
+        "flex flex-col flex-1 min-w-[240px] max-w-[400px] shrink-0 h-full border-r border-[#26282B]",
         isDragging && "opacity-50"
       )}
     >
-      <div className="p-4 flex items-center justify-between border-b border-zinc-800 bg-[#0A0A0A]">
+      <div className="px-4 py-3 flex items-center justify-between border-b border-transparent">
         <div className="flex items-center gap-2">
-          <span className="text-sm">{icon}</span>
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-            {title}
+          <span className="flex items-center justify-center">{icon}</span>
+          <h2 className="text-[13px] font-medium text-[#E2E2E2] capitalize">
+            {title.toLowerCase()}
           </h2>
+          <span className="text-[12px] font-medium text-[#8A8F98] ml-1">
+            {cards.length}
+          </span>
         </div>
-        <span className="text-[10px] font-bold text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
-          {cards.length}
-        </span>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-zinc-800">
+      <div className="flex-1 px-3 py-2 overflow-y-auto space-y-2.5 custom-scrollbar">
         {cards.map((card) => (
           <Card key={card.id} card={card} />
         ))}

@@ -10,22 +10,28 @@ export default function ProductionBoard() {
   const { refresh } = useKanbanBoard();
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0A0A]">
+    <div className="flex flex-col h-full bg-[#080808] relative overflow-hidden">
       {/* Header */}
-      <header className="h-16 border-b border-zinc-800 flex items-center justify-between px-8 shrink-0">
-        <div className="flex items-center gap-3">
-          <KanbanIcon className="w-5 h-5 text-zinc-400" />
-          <h1 className="text-sm font-semibold text-zinc-50 tracking-tight">Tablero de Producción</h1>
+      <header className="h-14 border-b border-[#26282B] flex items-center justify-between px-6 shrink-0 bg-[#080808] relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-900 border border-white/[0.05]">
+            <KanbanIcon className="w-4 h-4 text-zinc-400" />
+          </div>
+          <h1 className="text-[13px] font-semibold text-zinc-100 tracking-tight">Tablero de Producción</h1>
+          <div className="h-4 w-[1px] bg-white/[0.08] mx-1" />
+          <span className="text-[11px] text-zinc-500 font-medium">Pipeline v2.0</span>
         </div>
         
         <NewProjectDialog onProjectAdded={refresh} />
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-8 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent">
-        <SuggestedInbox onApprove={refresh} />
+      <div className="flex-1 flex flex-col overflow-hidden p-4 relative z-10">
+        <div className="shrink-0">
+          <SuggestedInbox onApprove={refresh} />
+        </div>
         
-        <div className="h-[calc(100vh-320px)] border border-zinc-800 rounded-xl overflow-hidden bg-zinc-950/30">
+        <div className="flex-1 overflow-hidden min-h-0">
           <Board />
         </div>
       </div>

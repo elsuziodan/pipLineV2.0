@@ -72,10 +72,10 @@ let activeProcess: ChildProcess | null = null;
 // ── Rutas ────────────────────────────────────────────────────────────────────
 
 // Ruta al directorio src/ del scraper Python
-// __dirname en ESModule con tsx apunta a src/pipeline/
+// Usamos una resolución más robusta que funcione desde la raíz o desde apps/call-track
 const SCRAPER_SRC_DIR = path.resolve(
   process.cwd(),
-  '../scrapper/src',
+  process.cwd().endsWith('call-track') ? '../scrapper/src' : 'apps/scrapper/src',
 );
 
 // ── Función pública: lanzar el scraper ───────────────────────────────────────

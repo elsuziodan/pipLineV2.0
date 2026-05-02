@@ -18,11 +18,13 @@ import { Card } from "./Card";
 import { useState } from "react";
 import { useKanbanBoard } from "@/hooks/useKanbanBoard";
 
+import { Factory, CircleDollarSign, CheckCircle2, XCircle } from "lucide-react";
+
 const COLUMNS = [
-  { id: "FABRICA", title: "Fábrica", icon: "⚙️" },
-  { id: "COBRANZA", title: "Sala de Cobranza", icon: "💰" },
-  { id: "LIQUIDADO", title: "Liquidados", icon: "🏆" },
-  { id: "CANCELADO", title: "Cancelados", icon: "💀" },
+  { id: "FABRICA", title: "Fábrica", icon: <Factory className="w-3.5 h-3.5 text-zinc-400" /> },
+  { id: "COBRANZA", title: "Sala de Cobranza", icon: <CircleDollarSign className="w-3.5 h-3.5 text-amber-500" /> },
+  { id: "LIQUIDADO", title: "Liquidados", icon: <CheckCircle2 className="w-3.5 h-3.5 text-[#5E6AD2]" /> },
+  { id: "CANCELADO", title: "Cancelados", icon: <XCircle className="w-3.5 h-3.5 text-red-500/80" /> },
 ];
 
 export function Board() {
@@ -75,14 +77,14 @@ export function Board() {
   }
 
   return (
-    <div className="flex h-full overflow-x-auto overflow-y-hidden bg-[#0A0A0A] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:bg-zinc-800">
+    <div className="flex h-full overflow-x-auto overflow-y-hidden bg-transparent custom-scrollbar">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        <div className="flex">
+        <div className="flex w-full h-full">
           {COLUMNS.map((col) => (
             <Column
               key={col.id}

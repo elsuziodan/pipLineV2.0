@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Kanban, MessageSquare, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,12 +15,14 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col w-64 bg-zinc-950 border-r border-zinc-800 h-full">
-      <div className="flex items-center h-16 px-6 border-b border-zinc-800">
-        <LayoutDashboard className="w-6 h-6 text-zinc-50 mr-2" />
-        <span className="text-zinc-50 font-bold tracking-tight">Seven Factor</span>
+    <div className="flex flex-col w-56 bg-[#0E0F11] border-r border-[#26282B] h-full relative z-20">
+      <div className="flex items-center h-14 px-5">
+        <div className="w-6 h-6 flex items-center justify-center mr-2 relative">
+          <Image src="/7f-logo.png" alt="7F Logo" fill className="object-contain" />
+        </div>
+        <span className="text-[13px] text-[#F2F2F2] font-semibold tracking-tight">Seven Factor Hub</span>
       </div>
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -27,16 +30,16 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                "group flex items-center px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors",
                 isActive
-                  ? "bg-zinc-900 text-zinc-50"
-                  : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-900/50"
+                  ? "bg-[#212224] text-[#F2F2F2]"
+                  : "text-[#8A8F98] hover:text-[#E2E2E2] hover:bg-[#212224]/50"
               )}
             >
               <item.icon
                 className={cn(
-                  "w-5 h-5 mr-3 flex-shrink-0",
-                  isActive ? "text-zinc-50" : "text-zinc-400"
+                  "w-3.5 h-3.5 mr-3 flex-shrink-0 transition-colors",
+                  isActive ? "text-[#5E6AD2]" : "text-[#8A8F98] group-hover:text-[#E2E2E2]"
                 )}
               />
               {item.name}
@@ -44,11 +47,11 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-zinc-800">
-        <div className="flex items-center px-3 py-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 mr-3 animate-pulse" />
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            System Online
+      <div className="p-3 border-t border-[#26282B]">
+        <div className="flex items-center px-3 py-1.5 rounded-md hover:bg-[#212224] transition-colors cursor-pointer">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] mr-2.5 shadow-[0_0_4px_rgba(16,185,129,0.3)]" />
+          <span className="text-[12px] font-medium text-[#8A8F98]">
+            System Active
           </span>
         </div>
       </div>

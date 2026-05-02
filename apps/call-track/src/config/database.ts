@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type PipelineStatus = 'prospecto' | 'contactado' | 'negociacion' | 'cerrado' | 'perdido';
+export type PipelineStatus = 'prospecto' | 'contactado' | 'negociacion' | 'cerrado' | 'perdido' | 'deployed';
 export type TagType = 'vip' | 'interesado' | 'no_responde' | 'nuevo' | 'recontactar' | 'outbound' | 'lead' | 'pendiente' | 'invalido';
 
 export const PIPELINE_STAGES: { key: PipelineStatus; label: string; color: string }[] = [
@@ -31,7 +31,8 @@ export type BotStatus =
   | 'HANDOVER_QUESTION' 
   | 'HANDOVER_CLIMAX' 
   | 'REJECTED'
-  | 'HANDOVER_MANUAL';
+  | 'HANDOVER_MANUAL'
+  | 'prospecto';
 
 export type Client = {
   id: string;

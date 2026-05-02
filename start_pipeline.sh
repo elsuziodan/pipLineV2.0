@@ -32,5 +32,18 @@ tmux send-keys -t $SESSION:0.2 "cd apps/dashboard && PORT=3001 npm run dev" C-m
 tmux select-layout -t $SESSION main-vertical
 
 echo "✅ Sistema arrancado con éxito."
-echo "👉 Para ver todo en tiempo real, escribe: tmux attach -t $SESSION"
-echo "👉 Para salir de la vista (sin apagar nada), presiona: Ctrl+B y luego D"
+echo "------------------------------------------------"
+echo "🌐 DASHBOARD: http://localhost:3001"
+
+# Intentar obtener la URL de Ngrok (esperar un poco para que arranque)
+sleep 2
+NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o 'https://[^"]*\.ngrok-free\.dev' | head -n 1)
+
+if [ -z "$NGROK_URL" ]; then
+    echo "🔗 BACKEND (NGROK): Esperando URL pública..."
+else
+    echo "🔗 BACKEND (NGROK): $NGROK_URL"
+fi
+echo "------------------------------------------------"
+echo "👉 Para ver todo en tiempo real: tmux attach -t $SESSION"
+echo "👉 Para salir de la vista (sin apagar nada): Ctrl+B y luego D"

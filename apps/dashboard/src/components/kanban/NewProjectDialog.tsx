@@ -66,47 +66,47 @@ export function NewProjectDialog({ onProjectAdded }: { onProjectAdded: (id: stri
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2 bg-zinc-50 text-zinc-950 rounded-md text-xs font-bold hover:bg-zinc-200 transition-colors h-8">
-          <Plus size={14} />
+        <Button className="flex items-center gap-2 bg-zinc-100 text-zinc-950 rounded-lg text-[11px] font-bold hover:bg-white transition-all h-8 px-4 active:scale-95">
+          <Plus size={14} strokeWidth={3} />
           NUEVO PROYECTO
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-50 sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="text-sm font-bold uppercase tracking-widest text-zinc-400">
-            Añadir Cliente a Producción
+      <DialogContent className="bg-[#0C0C0C] border-white/[0.05] text-zinc-50 sm:max-w-[425px] rounded-2xl shadow-2xl">
+        <DialogHeader className="border-b border-white/[0.05] pb-4">
+          <DialogTitle className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+            Añadir a Producción
           </DialogTitle>
         </DialogHeader>
-        <div className="py-4">
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <div className="pt-6 pb-2">
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
             <Input
-              placeholder="Buscar cliente por nombre o teléfono..."
-              className="bg-zinc-900 border-zinc-800 pl-10 text-sm focus-visible:ring-zinc-700"
+              placeholder="Nombre o teléfono..."
+              className="bg-white/[0.02] border-white/[0.05] pl-10 h-10 text-[13px] focus-visible:ring-zinc-800 rounded-xl"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <ScrollArea className="h-72 pr-4">
+          <ScrollArea className="h-80 -mr-4 pr-4 custom-scrollbar">
             {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+              <div className="flex items-center justify-center h-full py-20">
+                <Loader2 className="w-5 h-5 animate-spin text-zinc-700" />
               </div>
             ) : filteredClients.length > 0 ? (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {filteredClients.map((client) => (
                   <button
                     key={client.id}
                     onClick={() => handleSelect(client.id)}
-                    className="w-full text-left px-3 py-2 rounded-md hover:bg-zinc-900 transition-colors border border-transparent hover:border-zinc-800 group"
+                    className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/[0.03] transition-all border border-transparent hover:border-white/[0.05] group"
                   >
-                    <div className="text-sm font-medium text-zinc-50 group-hover:text-white">{client.name}</div>
-                    <div className="text-xs text-zinc-500 font-mono">+{client.phone}</div>
+                    <div className="text-[13px] font-medium text-zinc-400 group-hover:text-zinc-100 transition-colors">{client.name}</div>
+                    <div className="text-[10px] text-zinc-600 font-medium mt-0.5">+{client.phone}</div>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-zinc-600 text-sm">
+              <div className="text-center py-20 text-zinc-600 text-xs font-medium">
                 No se encontraron clientes.
               </div>
             )}

@@ -136,7 +136,7 @@ export interface GatePendingEvent {
 export interface GateDecisionEvent {
   gate: 'A' | 'B' | 'C';
   approved: boolean;
-  source: 'ai' | 'manual';    // quién tomó la decisión
+  source: 'ai' | 'manual' | 'system';    // quién tomó la decisión
   reason: string;
   timestamp: string;
 }

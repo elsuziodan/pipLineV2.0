@@ -125,6 +125,7 @@ export async function loadCSVToSupabase(csvPath: string): Promise<LoadReport> {
         address: addr || '',
         status:  'prospecto',
         tags:    ['nuevo'],
+        is_board_suggested: true,
         metadata: {
           source: 'scraper_pipeline',
           original_phone: phone,

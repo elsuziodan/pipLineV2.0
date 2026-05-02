@@ -1,120 +1,61 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0EA5E9;
-  --color-primary-glow: rgba(14, 165, 233, 0.4);
-  --color-accent: #FF6B00;
-  --color-surface: rgba(15, 23, 42, 0.5);
-  --color-surface-hover: rgba(30, 41, 59, 0.6);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-light: rgba(255, 255, 255, 0.15);
+  --color-primary: #5E6AD2;
+  --color-primary-glow: rgba(94, 106, 210, 0.4);
+  --color-accent: #5E6AD2;
+  --color-surface: #18191B;
+  --color-surface-hover: #212224;
+  --color-border: #26282B;
+  --color-border-light: #383A3F;
 }
 
 @layer base {
   :root {
-    --background: #020617; /* Very dark slate, almost black */
-    --foreground: #f8fafc;
+    --background: #080808; 
+    --foreground: #F2F2F2;
+    --card: #18191B;
+    --card-hover: #212224;
+    --border: #26282B;
+    --primary: #5E6AD2;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     min-height: 100vh;
     overflow: hidden; 
   }
 
   h1, h2, h3, h4, .font-heading {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     letter-spacing: -0.02em;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 }
 
 /* 
-  ELITE GLASSMORPHISM BENTO GRID SYSTEM
+  FLAT LINEAR CARDS 
 */
-.bento-card {
-  background: var(--color-surface);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--color-border);
-  border-top: 1px solid var(--color-border-light);
-  border-left: 1px solid var(--color-border-light);
-  border-radius: 1.5rem; /* 24px */
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
-  overflow: hidden;
+.bento-card, .linear-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
-.bento-card:hover {
-  background: var(--color-surface-hover);
-  border-color: rgba(14, 165, 233, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 20px 0 rgba(14, 165, 233, 0.1);
+.bento-card:hover, .linear-card:hover {
+  background: var(--card-hover);
+  border-color: #383A3F;
 }
 
-/* Subtle inner glow for cards */
-.bento-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: inherit;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
-  pointer-events: none;
-}
-
-.glow-text {
-  text-shadow: 0 0 20px var(--color-primary-glow);
-}
-
-/* Ambient Background Orbs */
+/* Ambient Background Orbs Removed */
 .bg-mesh-container {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: -1;
-  overflow: hidden;
-  background: #020617;
-}
-
-.orb-1, .orb-2 {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
-  animation: float 20s infinite ease-in-out alternate;
-}
-
-.orb-1 {
-  width: 600px; height: 600px;
-  background: #FF6B00;
-  top: -100px; right: -100px;
-}
-
-.orb-2 {
-  width: 500px; height: 500px;
-  background: #3B82F6;
-  bottom: -100px; left: -100px;
-  animation-delay: -10s;
-}
-
-@keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-50px, 50px) scale(1.1); }
-  100% { transform: translate(50px, -50px) scale(0.9); }
-}
-
-/* Animations */
-.animate-slide-up {
-  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-@keyframes slideUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  display: none;
 }
 
 /* Progress Bars */

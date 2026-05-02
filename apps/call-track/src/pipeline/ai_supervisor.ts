@@ -30,6 +30,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 dotenv.config({ path: path.join(process.cwd(), '.env.local') });
+dotenv.config({ path: path.join(process.cwd(), 'apps/call-track', '.env.local') });
 
 // ── Cliente de IA (EXCLUSIVAMENTE OpenRouter con MiniMax 2.7) ───────────────
 const openrouterApiKey = process.env.OPENROUTER_API_KEY;
@@ -92,7 +93,12 @@ function parseAuditResponse(raw: string, gate: string): AuditResult {
   const cleaned = raw.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
 
   try {
-    const parsed = JSON.parse(cleaned) as {
+    let jsonStr = cleaned;
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
+    }
+    const parsed = JSON.parse(jsonStr) as {
       score?: number;
       issues?: string[];
       recommendation?: string;

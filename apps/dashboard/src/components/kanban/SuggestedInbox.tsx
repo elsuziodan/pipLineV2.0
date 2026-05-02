@@ -1,9 +1,8 @@
 "use client";
 
 import { useSuggestedLeads } from "@/hooks/useSuggestedLeads";
-import { UserPlus, X, Inbox, Loader2 } from "lucide-react";
+import { UserPlus, X, Loader2, GitPullRequest } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export function SuggestedInbox({ onApprove }: { onApprove?: () => void }) {
@@ -11,9 +10,9 @@ export function SuggestedInbox({ onApprove }: { onApprove?: () => void }) {
 
   if (loading && leads.length === 0) {
     return (
-      <div className="flex items-center justify-center p-8 bg-zinc-900/30 border border-zinc-800 rounded-xl mb-8">
+      <div className="flex items-center justify-center p-8 bg-[#18191B] border border-white/5 rounded-xl mb-6">
         <Loader2 className="w-5 h-5 text-zinc-500 animate-spin mr-3" />
-        <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Cargando Sugerencias...</span>
+        <span className="text-zinc-500 text-xs font-medium tracking-wide">Cargando Sugerencias...</span>
       </div>
     );
   }
@@ -21,57 +20,75 @@ export function SuggestedInbox({ onApprove }: { onApprove?: () => void }) {
   if (leads.length === 0) return null;
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-2 mb-3">
-        <Inbox className="w-4 h-4 text-zinc-500" />
-        <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-500">Bandeja de Sugerencias</h2>
-        <Badge variant="outline" className="bg-zinc-900 text-zinc-400 border-zinc-800 ml-1">
-          {leads.length}
-        </Badge>
+    <div className="mb-6 px-1">
+      <div className="flex items-center gap-3 mb-3 px-1">
+        <GitPullRequest className="w-3.5 h-3.5 text-emerald-500" />
+        <h2 className="text-[11px] uppercase tracking-[0.2em] font-medium text-zinc-400">Incoming Pull Requests</h2>
+        <div className="h-4 w-[1px] bg-white/[0.08] mx-1" />
+        <span className="font-mono text-[10px] text-emerald-400/80 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+          {leads.length} Pending
+        </span>
       </div>
 
-      <ScrollArea className="w-full whitespace-nowrap rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
+      <ScrollArea className="w-full whitespace-nowrap rounded-xl border border-white/5 bg-[#0C0D0F] p-3 shadow-inner">
         <div className="flex w-max space-x-4">
-          {leads.map((lead) => (
-            <div
-              key={lead.id}
-              className="w-72 bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex flex-col gap-3"
-            >
-              <div className="flex items-start justify-between">
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-zinc-50 truncate">{lead.name}</h3>
-                  <p className="text-xs text-zinc-500 font-mono">+{lead.phone}</p>
+          {leads.map((lead) => {
+            const shortId = lead.id ? String(lead.id).substring(0, 4).toLowerCase() : 'xxx';
+            return (
+              <div
+                key={lead.id}
+                className="w-[280px] bg-[#18191B] border border-[#3FB950]/20 border-l-[3px] border-l-[#3FB950] rounded-lg overflow-hidden flex flex-col shadow-sm transition-all"
+              >
+                {/* Header (PR Tab) */}
+                <div className="bg-[#3FB950]/5 border-b border-[#3FB950]/10 px-3 py-1.5 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-500/80">
+                    <GitPullRequest className="w-3 h-3" />
+                    <span>pr-{shortId}</span>
+                  </div>
+                  <button
+                    onClick={() => ignoreLead(lead.id)}
+                    className="p-1 rounded hover:bg-white/10 text-zinc-500 hover:text-red-400 transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => ignoreLead(lead.id)}
-                  className="text-zinc-500 hover:text-zinc-50 transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              </div>
 
-              <p className="text-xs text-zinc-400 line-clamp-2 italic whitespace-normal">
-                "{lead.metadata?.last_message || "Lead calentado por IA..."}"
-              </p>
+                {/* Content */}
+                <div className="p-3 flex flex-col gap-2">
+                  <h3 className="text-[11.5px] text-[#79C0FF] font-mono truncate">
+                    "{lead.name}"
+                  </h3>
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="font-mono text-[10px] text-[#D2A8FF] truncate">
+                      "{lead.phone ? `+${lead.phone}` : 'N/A'}"
+                    </div>
+                  </div>
+                  
+                  <div className="font-mono text-[10px] text-zinc-500 mt-1 truncate">
+                    /* {lead.metadata?.last_message || "AI intent detected"} */
+                  </div>
 
-              <div className="flex gap-2 mt-auto">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="flex-1 bg-zinc-50 text-zinc-950 hover:bg-zinc-200 text-[10px] font-bold h-8"
-                  onClick={async () => {
-                    await approveLead(lead.id);
-                    if (onApprove) onApprove();
-                  }}
-                >
-                  <UserPlus className="w-3 h-3 mr-2" />
-                  AÑADIR A PRODUCCIÓN
-                </Button>
+                  <div className="mt-2 pt-2 border-t border-white/5">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="w-full bg-[#238636]/90 hover:bg-[#2EA043] text-white border border-[#2EA043]/50 font-mono text-[10px] font-bold h-7 rounded transition-transform active:scale-[0.98]"
+                      onClick={async () => {
+                        await approveLead(lead.id);
+                        if (onApprove) onApprove();
+                      }}
+                    >
+                      <UserPlus className="w-3 h-3 mr-2" />
+                      MERGE LEAD
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <ScrollBar orientation="horizontal" className="bg-zinc-800/50" />
+        <ScrollBar orientation="horizontal" className="bg-white/[0.03]" />
       </ScrollArea>
     </div>
   );
