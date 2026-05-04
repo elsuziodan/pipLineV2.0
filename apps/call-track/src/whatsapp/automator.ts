@@ -187,6 +187,7 @@ export class Automator {
 
           // Notificar al Dashboard
           pipelineEvents.emit('bot:message', {
+            clientId: prospecto.id,
             direction: 'OUT',
             name: prospecto.name,
             phone: chatId,
@@ -217,9 +218,10 @@ export class Automator {
     } catch (err) {
       console.error('❌ Error en startNext:', err);
     } finally {
-      this.isOutreachRunning = false;
       // Pausa moderada (8 a 15 segundos) para no saturar la API ni crear una avalancha de respuestas
       await new Promise(r => setTimeout(r, HumanLikeDelays.naturalDelay(8000, 15000)));
+      
+      this.isOutreachRunning = false;
       
       // Auto-encadenar el siguiente prospecto si no hemos llegado al límite masivo
       if (this.outreachBatchCount < Automator.OUTREACH_LIMIT) {
@@ -305,6 +307,7 @@ export class Automator {
       console.log(`✅ Collage enviado con caption`);
       await saveMessage(prospecto.id, 'bot', imgCaption, 'SENT_PROPOSAL');
       pipelineEvents.emit('bot:message', {
+        clientId: prospecto.id,
         direction: 'OUT', name: prospecto.name, phone: rawPhone,
         text: imgCaption, botStatus: 'SENT_PROPOSAL',
         timestamp: new Date().toISOString(),
@@ -317,6 +320,7 @@ export class Automator {
       console.log(`✅ Msg1 enviado (presentación)`);
       await saveMessage(prospecto.id, 'bot', msg1, 'SENT_PROPOSAL');
       pipelineEvents.emit('bot:message', {
+        clientId: prospecto.id,
         direction: 'OUT', name: prospecto.name, phone: rawPhone,
         text: msg1, botStatus: 'SENT_PROPOSAL',
         timestamp: new Date().toISOString(),
@@ -329,6 +333,7 @@ export class Automator {
       console.log(`✅ Msg2 enviado (propuesta)`);
       await saveMessage(prospecto.id, 'bot', msg2, 'SENT_PROPOSAL');
       pipelineEvents.emit('bot:message', {
+        clientId: prospecto.id,
         direction: 'OUT', name: prospecto.name, phone: rawPhone,
         text: msg2, botStatus: 'SENT_PROPOSAL',
         timestamp: new Date().toISOString(),
@@ -364,6 +369,7 @@ export class Automator {
       console.log(`[Automator] Step 3 enviado a ${prospecto.name}`);
       await saveMessage(prospecto.id, 'bot', msg, 'SENT_CLIMAX');
       pipelineEvents.emit('bot:message', {
+        clientId: prospecto.id,
         direction: 'OUT', name: prospecto.name, phone: rawPhone,
         text: msg, botStatus: 'SENT_CLIMAX',
         timestamp: new Date().toISOString(),

@@ -113,6 +113,10 @@ export async function runScraper(
     '--max-results', String(maxResultsPerKeyword),
   ];
 
+  if (_keywords && _keywords.length > 0) {
+    args.push('--keywords', _keywords.join(','));
+  }
+
   if (runAudit) args.push('--audit');
 
   console.log(`🕷 [ScraperAdapter] Lanzando scraper: python3 ${args.join(' ')}`);

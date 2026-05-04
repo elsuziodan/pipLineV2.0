@@ -35,6 +35,8 @@ CREATE TABLE public.conversations (
     message      TEXT        NOT NULL,
     stage        TEXT,       -- Estado del bot en el momento del mensaje
     wa_timestamp BIGINT,     -- Timestamp enviado por la API de Meta
+    media_url    TEXT,       -- URL pública (Supabase Storage)
+    media_type   TEXT,       -- 'audio', 'image', null
     created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 

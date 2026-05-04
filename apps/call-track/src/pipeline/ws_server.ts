@@ -136,9 +136,9 @@ function registerPipelineListeners(wss: WebSocketServer): void {
   });
 
   pipelineEvents.on('bot:message', (data) => {
-    // Almacenar mensajes en memoria para nuevas conexiones (máx 50)
+    // Almacenar mensajes en memoria para nuevas conexiones (máx 200)
     recentBotMessages.unshift(data);
-    if (recentBotMessages.length > 50) recentBotMessages.pop();
+    if (recentBotMessages.length > 200) recentBotMessages.pop();
     broadcast(wss, 'bot:message', data);
   });
 
@@ -338,6 +338,7 @@ function handleCommand(raw: string): void {
           
           // 3. Notificar al Dashboard
           pipelineEvents.emit('bot:message', {
+             clientId,
              direction: 'OUT', name, phone,
              text, botStatus: 'MANUAL',
              timestamp: new Date().toISOString(),

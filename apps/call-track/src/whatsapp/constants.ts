@@ -78,6 +78,15 @@ export const SCRIPT_VARIANTS = {
     "claro.. mi jefe se pone en contacto contigo en un momento para que te explique mejor"
   ],
 
+  // Respuesta puente: el cliente confirmó implícitamente (pregunta de cortesía)
+  // Se envía ANTES de avanzar automáticamente a Step 2
+  // Estilo: sin emojis.. sin mayúsculas.. puntitos en lugar de comas
+  RESPOND_BRIDGE: [
+    "le tenemos una propuesta para su negocio.. permítame le platico brevemente",
+    "claro.. le comento.. tenemos una propuesta que podría interesarle",
+    "con gusto.. le tenemos una propuesta que creo le va a interesar.. le platico"
+  ],
+
   // Salida negativa: sin insistir.. sin emojis.. dejar la puerta abierta
   NEGATIVE_RESPONSE: [
     // Rechazo directo

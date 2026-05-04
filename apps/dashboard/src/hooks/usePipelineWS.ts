@@ -52,9 +52,16 @@ export function usePipelineWS() {
           ns.loader = null;
           break;
         case 'bot:message':
+          // Deduplicación estricta por ID compuesto (phone + direction + text + timestamp truncado a 10s)
+          const msgKey = `${data.phone}-${data.direction}-${data.text?.substring(0,50)}-${Math.floor(new Date(data.timestamp).getTime()/10000)}`;
+          if (ns.bot.messages.some((m: any) => {
+            const mKey = `${m.phone}-${m.direction}-${m.text?.substring(0,50)}-${Math.floor(new Date(m.timestamp).getTime()/10000)}`;
+            return mKey === msgKey;
+          })) break; // Skip duplicate
+
           ns.bot = {
              ...ns.bot,
-             messages: [data, ...ns.bot.messages].slice(0, 50)
+             messages: [data, ...ns.bot.messages].slice(0, 200)
           };
           // Sonido de notificación para mensajes entrantes
           if (data.direction === 'IN') {

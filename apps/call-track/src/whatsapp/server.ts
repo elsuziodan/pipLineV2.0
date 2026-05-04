@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { supabase } from '../config/supabase.js';
+import { closeClientTopic } from '../services/telegram_crm_bridge.js';
 
 dotenv.config({ path: '.env.local' });
 
@@ -14,7 +15,7 @@ app.use(cors()); // Permitir acceso desde el Dashboard (localhost:3002)
 const PORT = process.env.PORT || 3000;
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
 
-import { getRecentContacts, getHistory } from '../config/conversations.js';
+import { getRecentContacts, getHistory, getHistoryPaginated } from '../config/conversations.js';
 
 // --- NUEVOS ENDPOINTS PARA EL DASHBOARD ---
 app.get('/api/contacts', async (req, res) => {
@@ -34,6 +35,20 @@ app.get('/api/history/:clientId', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
+
+app.get('/api/history/:clientId/paginated', async (req, res) => {
+    try {
+        const { cursor, limit } = req.query;
+        const result = await getHistoryPaginated(
+            req.params.clientId,
+            limit ? parseInt(limit as string) : 20,
+            cursor as string | undefined
+        );
+        res.json(result);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 // ------------------------------------------
 import { getConversionMetrics } from '../services/metrics.js';
 
@@ -48,11 +63,16 @@ app.get('/api/metrics', async (req, res) => {
 
 app.get('/api/client/:clientId', async (req, res) => {
     try {
-        const { data: client } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('id', req.params.clientId)
-            .single();
+        const { clientId } = req.params;
+        let query = supabase.from('clients').select('*');
+        
+        if (clientId.includes('-')) {
+            query = query.eq('id', clientId);
+        } else {
+            query = query.eq('phone', clientId);
+        }
+
+        const { data: client } = await query.single();
 
         if (!client) {
             return res.status(404).json({ error: 'Cliente no encontrado' });
@@ -70,6 +90,89 @@ app.get('/api/client/:clientId', async (req, res) => {
 });
 
 // --- KANBAN & SUGGESTED LEADS API ---
+
+app.get('/api/kanban/cards', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('clients')
+            .select('id, name, phone, status, metadata, address, board_moved_at, created_at')
+            .in('status', ['FABRICA', 'COBRANZA', 'LIQUIDADO', 'CANCELADO'])
+            .is('archived_at', null)
+            .order('board_moved_at', { ascending: false, nullsFirst: false });
+
+        if (error) throw error;
+        res.json(data || []);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/kanban/archive/:id', async (req, res) => {
+    try {
+        const { deal_notes } = req.body;
+        const clientId = req.params.id;
+
+        // 1. Obtener datos del cliente
+        const { data: client } = await supabase
+            .from('clients').select('*').eq('id', clientId).single();
+        if (!client) return res.status(404).json({ error: 'Not found' });
+
+        // 2. Si es LIQUIDADO → registrar en closed_deals con conversación
+        if (client.status === 'LIQUIDADO') {
+            // Snapshot completo de la conversación
+            const { data: messages } = await supabase
+                .from('conversations')
+                .select('role, message, stage, wa_timestamp, created_at')
+                .eq('client_id', clientId)
+                .order('created_at', { ascending: true });
+
+            await supabase.from('closed_deals').insert({
+                client_id: client.id,
+                client_name: client.name,
+                client_phone: client.phone,
+                client_address: client.address,
+                landing_url: (client as any).landing_url || null,
+                deal_metadata: {
+                    ...(client.metadata || {}),
+                    close_notes: deal_notes || null,
+                    tags: client.tags,
+                },
+                conversation: messages || [],
+            });
+        }
+
+        // 3. Marcar como archivado (desaparece del tablero)
+        await supabase.from('clients')
+            .update({ archived_at: new Date().toISOString() })
+            .eq('id', clientId);
+
+        // Cerrar Topic de Telegram si existe
+        const tgThreadId = (client.metadata as any)?.telegram_thread_id;
+        if (tgThreadId) {
+            closeClientTopic(tgThreadId).catch(e => 
+                console.error('[Archive] Error cerrando Topic de Telegram:', e)
+            );
+        }
+
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/closed-deals', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('closed_deals')
+            .select('*')
+            .order('closed_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(data || []);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 app.get('/api/leads/suggested', async (req, res) => {
     try {
@@ -118,21 +221,72 @@ app.post('/api/leads/suggested/:id/approve', async (req, res) => {
     }
 });
 
-app.get('/api/kanban/cards', async (req, res) => {
+app.get('/api/stats', async (req, res) => {
     try {
-        const kanbanStatuses = ['FABRICA', 'COBRANZA', 'LIQUIDADO', 'CANCELADO'];
-        const { data, error } = await supabase
-            .from('clients')
-            .select('*')
-            .in('status', kanbanStatuses)
-            .order('board_moved_at', { ascending: false });
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayISO = todayStart.toISOString();
 
-        if (error) throw error;
-        res.json(data);
+        // 1. Mensajes enviados por bot hoy
+        const { count: botMessagesToday } = await supabase
+            .from('conversations')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'bot')
+            .gte('created_at', todayISO);
+
+        // 2. Mensajes recibidos de clientes hoy
+        const { count: userMessagesToday } = await supabase
+            .from('conversations')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'user')
+            .gte('created_at', todayISO);
+
+        // 3. Conversaciones activas (distintos clientes en últimas 24h)
+        const yesterday = new Date(Date.now() - 86400000).toISOString();
+        const { data: activeConvos } = await supabase
+            .from('conversations')
+            .select('client_id')
+            .gte('created_at', yesterday);
+        const activeCount = new Set(activeConvos?.map(c => c.client_id)).size;
+
+        // 4. Pipeline snapshot (conteo por status)
+        const { data: allClients } = await supabase
+            .from('clients')
+            .select('status');
+        
+        const pipeline: Record<string, number> = {};
+        allClients?.forEach(c => {
+            pipeline[c.status] = (pipeline[c.status] || 0) + 1;
+        });
+
+        // 5. Nuevos leads hoy (creados hoy)
+        const { count: newLeadsToday } = await supabase
+            .from('clients')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', todayISO);
+
+        // 6. Últimos 10 eventos (actividad reciente del sistema)
+        const { data: recentEvents } = await supabase
+            .from('conversations')
+            .select('role, message, created_at, client_id')
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        res.json({
+            agents: {
+                bot_messages_today: botMessagesToday || 0,
+                user_messages_today: userMessagesToday || 0,
+                active_conversations: activeCount,
+            },
+            pipeline,
+            new_leads_today: newLeadsToday || 0,
+            recent_events: recentEvents || [],
+        });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
+
 
 app.patch('/api/client/:id/status', async (req, res) => {
     try {
@@ -152,22 +306,6 @@ app.patch('/api/client/:id/status', async (req, res) => {
     }
 });
 
-// Endpoint para servir archivos multimedia (audio/imágenes)
-app.get('/api/media/:folder/:filename', (req, res) => {
-    const { folder, filename } = req.params;
-    const safeFolders = ['audios', 'images'];
-    if (!safeFolders.includes(folder)) {
-        return res.status(403).send('Acceso denegado');
-    }
-
-    const filePath = path.join(process.cwd(), 'downloads', folder, filename);
-    
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).send('Archivo no encontrado');
-    }
-});
 
 // Webhook Verification (GET) - Requerido por Meta
 app.get('/webhook', (req, res) => {
@@ -254,7 +392,7 @@ app.post('/telegram-crm-webhook', (req, res) => {
 
             // ── Caso 1: Mensaje de texto ──
             if (message.text) {
-                await sendTelegramTextToWhatsApp(clientPhone, message.text, client.id);
+                await sendTelegramTextToWhatsApp(clientPhone, message.text, client.id, threadId);
                 return;
             }
 
@@ -280,6 +418,116 @@ app.post('/telegram-crm-webhook', (req, res) => {
 
         } catch (err: any) {
             console.error('[TG-CRM Webhook] Error procesando reply de Telegram:', err.message);
+        }
+    });
+});
+
+// ── DevOps Bot: Webhook para InlineKeyboard Callbacks ────────────────────────
+// Procesa las pulsaciones de botones del Bot de Control Remoto.
+app.post('/telegram-devops-webhook', (req, res) => {
+    res.sendStatus(200);
+
+    setImmediate(async () => {
+        try {
+            const update = req.body;
+            const callback = update?.callback_query;
+            if (!callback) return;
+
+            const data = callback.data; // formato: "action:clientId"
+            if (!data) return;
+
+            const [action, clientId] = data.split(':');
+            if (!clientId) return;
+
+            const DEVOPS_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+            const DEVOPS_API = `https://api.telegram.org/bot${DEVOPS_TOKEN}`;
+
+            // Responder al callback para quitar el "loading" del botón
+            const axios = (await import('axios')).default;
+            await axios.post(`${DEVOPS_API}/answerCallbackQuery`, {
+                callback_query_id: callback.id,
+                text: `Ejecutando: ${action}...`,
+            });
+
+            switch (action) {
+                case 'approve': {
+                    // Mover a FABRICA + quitar sugerencia
+                    await supabase.from('clients').update({ 
+                        status: 'FABRICA',
+                        is_board_suggested: false,
+                        board_moved_at: new Date().toISOString(),
+                    }).eq('id', clientId);
+
+                    // Editar el mensaje original para mostrar resultado
+                    await axios.post(`${DEVOPS_API}/editMessageText`, {
+                        chat_id: callback.message.chat.id,
+                        message_id: callback.message.message_id,
+                        text: callback.message.text + '\n\n✅ APROBADO → Fábrica',
+                        parse_mode: 'HTML',
+                    }).catch(() => {});
+
+                    console.log(`[DevOps Bot] Cliente ${clientId} aprobado a FABRICA`);
+                    break;
+                }
+                case 'discard': {
+                    await supabase.from('clients').update({ 
+                        is_board_suggested: false,
+                    }).eq('id', clientId);
+
+                    await axios.post(`${DEVOPS_API}/editMessageText`, {
+                        chat_id: callback.message.chat.id,
+                        message_id: callback.message.message_id,
+                        text: callback.message.text + '\n\n❌ DESCARTADO',
+                        parse_mode: 'HTML',
+                    }).catch(() => {});
+
+                    console.log(`[DevOps Bot] Cliente ${clientId} descartado`);
+                    break;
+                }
+                case 'pause': {
+                    const { data: client } = await supabase
+                        .from('clients').select('metadata').eq('id', clientId).single();
+                    
+                    if (client) {
+                        await supabase.from('clients').update({
+                            metadata: { ...(client.metadata as any || {}), bot_status: 'HANDOVER_MANUAL' }
+                        }).eq('id', clientId);
+                    }
+
+                    await axios.post(`${DEVOPS_API}/editMessageText`, {
+                        chat_id: callback.message.chat.id,
+                        message_id: callback.message.message_id,
+                        text: callback.message.text + '\n\n⏸️ BOT PAUSADO',
+                        parse_mode: 'HTML',
+                    }).catch(() => {});
+
+                    console.log(`[DevOps Bot] Bot pausado para cliente ${clientId}`);
+                    break;
+                }
+                case 'resume': {
+                    const { data: client2 } = await supabase
+                        .from('clients').select('metadata').eq('id', clientId).single();
+                    
+                    if (client2) {
+                        const meta = { ...(client2.metadata as any || {}) };
+                        meta.bot_status = 'SENT_GREETING';
+                        delete meta.telegram_thread_id;
+                        await supabase.from('clients').update({ metadata: meta }).eq('id', clientId);
+                    }
+
+                    await axios.post(`${DEVOPS_API}/editMessageText`, {
+                        chat_id: callback.message.chat.id,
+                        message_id: callback.message.message_id,
+                        text: callback.message.text + '\n\n▶️ BOT REACTIVADO',
+                        parse_mode: 'HTML',
+                    }).catch(() => {});
+
+                    console.log(`[DevOps Bot] Bot reactivado para cliente ${clientId}`);
+                    break;
+                }
+            }
+        } catch (err: any) {
+            console.error('[DevOps Webhook] Error:', err.message);
         }
     });
 });

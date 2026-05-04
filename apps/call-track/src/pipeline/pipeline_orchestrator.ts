@@ -312,14 +312,7 @@ class PipelineOrchestrator {
     this.setState('BLOCK_2_RUNNING', 'Iniciando bot de WhatsApp...');
     pipelineEvents.emit('bot:resume');
 
-    console.log('🤖 [Bloque 2] Bot iniciado. Esperando que el Automator termine de procesar leads...');
-
-    await new Promise<void>((resolve) => {
-      const onStop = () => resolve();
-      const onComplete = () => resolve();
-      pipelineEvents.once('pipeline:stop', onStop);
-      pipelineEvents.once('bot:exhausted', onComplete);
-    });
+    console.log('🤖 [Bloque 2] Bot disparado. Los leads se procesarán en segundo plano.');
   }
 
   // ── Helper: Esperar override manual ───────────────────────────────────────

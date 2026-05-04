@@ -96,6 +96,12 @@ def parse_args():
         default=MAX_RESULTS_PER_KEYWORD,
         help=f"Max results per keyword (default: {MAX_RESULTS_PER_KEYWORD})",
     )
+    parser.add_argument(
+        "--keywords",
+        type=str,
+        default="",
+        help="Comma-separated list of keywords to search",
+    )
     return parser.parse_args()
 
 
@@ -104,13 +110,15 @@ def parse_args():
 # ===========================================================================
 
 
-def run(city: str, provider_name: str, run_audit: bool, max_results: int):
+def run(city: str, provider_name: str, run_audit: bool, max_results: int, custom_keywords: list = None):
     actual_provider = "google_maps_browser" if provider_name == "real" else "mock"
+    keywords_to_use = custom_keywords if custom_keywords else KEYWORDS
 
     logger.info("=" * 65)
     logger.info("  city-prospect-radar  |  Intelligence Pipeline")
     logger.info("  City: %s | Provider: %s | Audit: %s | MaxPer: %d",
                 city, actual_provider, run_audit, max_results)
+    logger.info("  Keywords: %s", ", ".join(keywords_to_use))
     logger.info("=" * 65)
 
     # ── Step 1: Discovery ──────────────────────────────────────────────────
@@ -131,7 +139,7 @@ def run(city: str, provider_name: str, run_audit: bool, max_results: int):
         seen: dict = {}
         all_records = []
 
-        for kw in KEYWORDS:
+        for kw in keywords_to_use:
             checkpoint_path = (
                 f"{CHECKPOINT_DIR}/{city.lower().replace(' ', '_')}"
                 f"_{kw.lower().replace(' ', '_').replace('/', '_')}.json"
@@ -169,7 +177,7 @@ def run(city: str, provider_name: str, run_audit: bool, max_results: int):
     else:
         all_records = search_multiple_keywords(
             city=city,
-            keywords=KEYWORDS,
+            keywords=keywords_to_use,
             provider=actual_provider,
             max_results=max_results,
         )
@@ -237,9 +245,11 @@ def run(city: str, provider_name: str, run_audit: bool, max_results: int):
 
 if __name__ == "__main__":
     args = parse_args()
+    custom_keywords = [k.strip() for k in args.keywords.split(',')] if args.keywords else None
     run(
         city=args.city,
         provider_name=args.provider,
         run_audit=args.audit,
         max_results=args.max_results,
+        custom_keywords=custom_keywords,
     )

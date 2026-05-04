@@ -33,6 +33,7 @@ const MODELS = [
 // ── Tipos de decisión ────────────────────────────────────────────────────────
 
 export type SebastianDecision =
+  | { action: 'RESPOND' }
   | { action: 'ADVANCE_PROPOSAL' }
   | { action: 'ADVANCE_CLIMAX' }
   | { action: 'CLIMAX_ACCEPT' }
@@ -55,29 +56,55 @@ function buildSystemPrompt(stage: string, history: ConversationMessage[], client
 SITUACIÓN: Le enviaste una plantilla de saludo al cliente preguntando si es el negocio.
 El cliente acaba de responder (a veces envía varios mensajes seguidos).
 
+CONTEXTO CULTURAL MEXICANO (CRÍTICO — lee esto antes de decidir):
+En México por WhatsApp.. las siguientes respuestas son CONFIRMACIONES IMPLÍCITAS.. NO son preguntas reales:
+- "en que puedo ayudarle?" / "que se le ofrece?" = el cliente CONFIRMA y quiere saber qué ofreces
+- "quien habla?" / "quien es?" / "de donde hablan?" = el cliente CONFIRMA y quiere identificarte
+- "mande" / "diga" / "digame" / "si?" = confirmación coloquial mexicana (= "te escucho")
+- "de que se trata?" / "que ofrecen?" = curiosidad positiva.. quiere escuchar tu propuesta
+- "buenas" / "buen dia" / "hola" = saludo positivo
+- "si" / "correcto" / "asi es" / "soy yo" = confirmación directa
+
+ESTAS respuestas SÍ son rechazos o problemas reales:
+- "no me interesa" / "no gracias" / "ya tengo pagina" = rechazo → EXIT
+- "numero equivocado" / "no soy" / "ya no existe el negocio" = no es el contacto → EXIT
+- "cuanto cuesta?" / "que incluye?" / preguntas sobre precio o detalles técnicos = duda real → HANDOVER
+
 TU TRABAJO COMO EVALUADOR:
-- Analiza si el cliente confirma ser el negocio o responde de forma positiva/amigable.
-- Si el cliente confirma o saluda positivamente → decide ADVANCE_PROPOSAL inmediatamente.
-- Si el cliente dice que no es el número o no le interesa → decide EXIT.
-- Si pregunta algo o tiene dudas → decide HANDOVER (no puedes platicar).
+- Si el cliente CONFIRMA DIRECTAMENTE ("sí".. "correcto".. "así es") → decide ADVANCE_PROPOSAL
+- Si el cliente responde con una CONFIRMACIÓN IMPLÍCITA (pregunta de cortesía mexicana como "en qué le ayudo?".. "quién habla?".. "mande") → decide RESPOND
+- Si el cliente RECHAZA o dice que no es el número → decide EXIT
+- Si el cliente hace una PREGUNTA TÉCNICA ESPECÍFICA (precio.. tiempo.. detalles) → decide HANDOVER
 `,
     SENT_PROPOSAL: `
 SITUACIÓN: Le enviaste la propuesta visual (collage) y explicaste el intercambio de diseño gratis por reseña.
 El cliente está evaluando la propuesta.
 
+CONTEXTO CULTURAL MEXICANO:
+- "a ver" / "como seria?" / "me interesa pero.." / "suena bien" = INTERÉS POSITIVO → avanzar
+- "va" / "dale" / "orale" / "si" / "me interesa" = aceptación directa → avanzar
+- "cuanto cuesta?" / "que incluye?" / "en cuanto tiempo?" = pregunta técnica → HANDOVER
+- "lo voy a pensar" / "ahorita no" = rechazo educado → EXIT
+
 TU TRABAJO COMO EVALUADOR:
-- Analiza el interés. Si el cliente dice "sí", "me interesa", "va", o cualquier señal de aceptación → decide ADVANCE_CLIMAX obligatoriamente.
-- Si el cliente pregunta algo, tiene dudas o pide detalles técnicos → decide HANDOVER.
-- Si el cliente rechaza → decide EXIT.
+- Si el cliente muestra CUALQUIER señal de interés o aceptación → decide ADVANCE_CLIMAX obligatoriamente.
+- Si el cliente tiene dudas técnicas reales (precios.. tiempos.. entregables) → decide HANDOVER.
+- Si el cliente rechaza o pide tiempo → decide EXIT.
 `,
     SENT_CLIMAX: `
 SITUACIÓN: Le ofreciste la llamada de 5 minutos para explicar los detalles.
 El cliente decide si acepta hablar con Daniel (el jefe).
 
+CONTEXTO CULTURAL MEXICANO:
+- "si" / "va" / "dale" / "cuando me marcas?" / "mañana" / "luego" / "ahorita puedo" = ACEPTA llamada
+- "a que hora?" / "que dia?" = está coordinando la llamada = ACEPTA
+- "mandame info por aqui" / "mejor por mensaje" = no quiere llamada = EXIT educado
+- "cuanto cuesta?" / duda técnica antes de aceptar = HANDOVER
+
 TU TRABAJO COMO EVALUADOR:
-- Si el cliente acepta la llamada, da su número o dice "mañana", "luego", "sí" → decide CLIMAX_ACCEPT.
-- Si pregunta cualquier cosa antes de aceptar → decide HANDOVER.
-- Si rechaza → decide EXIT.
+- Si el cliente acepta la llamada.. da horario.. o muestra disposición → decide CLIMAX_ACCEPT.
+- Si el cliente hace una pregunta técnica real antes de decidir → decide HANDOVER.
+- Si el cliente rechaza o prefiere no hablar por teléfono → decide EXIT.
 `,
   };
 
@@ -101,12 +128,13 @@ ${stageContext}
 HISTORIAL DE LA CONVERSACIÓN:
 ${historyText}
 
-FORMATO DE RESPUESTA (JSON ÚNICAMENTE):
-{"action": "ADVANCE_PROPOSAL"}
-{"action": "ADVANCE_CLIMAX"}
-{"action": "CLIMAX_ACCEPT"}
-{"action": "HANDOVER"}
-{"action": "EXIT"}
+FORMATO DE RESPUESTA (JSON ÚNICAMENTE — elige UNA sola acción):
+{"action": "RESPOND"} — respuesta puente antes de avanzar (confirmación implícita)
+{"action": "ADVANCE_PROPOSAL"} — avanzar directo a propuesta (confirmación explícita)
+{"action": "ADVANCE_CLIMAX"} — avanzar a oferta de llamada
+{"action": "CLIMAX_ACCEPT"} — cliente aceptó llamada
+{"action": "HANDOVER"} — duda técnica real que no puedes resolver
+{"action": "EXIT"} — cliente rechazó o no es el contacto
 
 INFO DEL NEGOCIO: ${clientName || 'desconocido'}${clientAddress ? ` — ubicado en ${clientAddress}` : ''}`;
 }
@@ -125,6 +153,7 @@ function parseDecision(raw: string, clientName: string): SebastianDecision {
     const action = (parsed.action || '').toUpperCase();
 
     switch (action) {
+      case 'RESPOND':          return { action: 'RESPOND' };
       case 'ADVANCE_PROPOSAL': return { action: 'ADVANCE_PROPOSAL' };
       case 'ADVANCE_CLIMAX':   return { action: 'ADVANCE_CLIMAX' };
       case 'CLIMAX_ACCEPT':    return { action: 'CLIMAX_ACCEPT' };
@@ -133,6 +162,7 @@ function parseDecision(raw: string, clientName: string): SebastianDecision {
     }
   } catch {
     const upperRaw = raw.toUpperCase();
+    if (upperRaw.includes('RESPOND'))          return { action: 'RESPOND' };
     if (upperRaw.includes('ADVANCE_PROPOSAL')) return { action: 'ADVANCE_PROPOSAL' };
     if (upperRaw.includes('ADVANCE_CLIMAX'))   return { action: 'ADVANCE_CLIMAX' };
     if (upperRaw.includes('CLIMAX_ACCEPT'))    return { action: 'CLIMAX_ACCEPT' };
@@ -191,7 +221,12 @@ export async function getSebastianDecision(
     }
 
     console.log(`🤖 [Sebastian] Respuesta de ${usedModel}: ${content.substring(0, 120)}`);
-    return parseDecision(content, clientName);
+    const decision = parseDecision(content, clientName);
+
+    // Audit log: registrar decisión para análisis de falsos positivos
+    console.log(`📊 [Sebastian AUDIT] ${clientName} | msg: "${clientMessage.substring(0, 60)}" | stage: ${stage} | decision: ${decision.action} | model: ${usedModel}`);
+
+    return decision;
 
   } catch (err: any) {
     console.error(`❌ [Sebastian] Error en IA para ${clientName}:`, err.status, err.message);

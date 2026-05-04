@@ -29,7 +29,8 @@ import { SCRIPT_VARIANTS } from './constants.js';
 import { pipelineEvents } from '../pipeline/pipeline_events.js';
 import { leadQueueManager } from './lead_queue.js';
 import { saveMessage, getHistory } from '../config/conversations.js';
-import { uniquifyMessage } from './utils.js';
+import { uniquifyMessage, HumanLikeDelays } from './utils.js';
+import { downloadAndUploadMedia } from '../services/media_storage.js';
 import {
   initiateTakeoverBridge,
   sendWhatsAppTextToTelegram,
@@ -64,29 +65,48 @@ export const handleIncomingMessage = async (message: any, contactInfo: any) => {
             if (clientData) {
                 const botStatus = (clientData.metadata as any)?.bot_status as BotStatus;
                 
-                // Generar nombre de archivo
-                const extension = mType === 'audio' ? 'ogg' : (mType === 'image' ? 'jpg' : 'bin');
-                const filename = `${mType}_${Date.now()}.${extension}`;
-                const folder = mType === 'audio' ? 'audios' : 'images';
-                const localPath = `downloads/${folder}/${filename}`;
+                let incomingText = `[MULTIMEDIA: ${mType.toUpperCase()}]`;
 
-                // Asegurar directorios
-                const fullDir = path.join(process.cwd(), 'downloads', folder);
-                if (!fs.existsSync(fullDir)) fs.mkdirSync(fullDir, { recursive: true });
+                // 1. Descargar y subir a Supabase Storage
+                if (mediaId && (mType === 'audio' || mType === 'image' || mType === 'video')) {
+                    try {
+                        const mediaUrl = await downloadAndUploadMedia(
+                            mediaId, 
+                            clientData.id, 
+                            mType as 'audio' | 'image' | 'video'
+                        );
+                        
+                        // Guardar en el historial con la URL pública
+                        const logMessage = `[MEDIA:${mType.toUpperCase()}] ${mediaUrl}`;
+                        await saveMessage(
+                            clientData.id, 
+                            'user', 
+                            logMessage, 
+                            botStatus, 
+                            waTimestamp, 
+                            mediaUrl, 
+                            mType as 'audio' | 'image' | 'video'
+                        );
 
-                // Descargar el archivo (background)
-                if (mediaId) {
-                    MetaClient.downloadMedia(mediaId, `./${localPath}`)
-                        .then(() => console.log(`[Handler] Archivo guardado: ${localPath}`))
-                        .catch(e => console.error(`[Handler] Error descargando multimedia:`, e));
+                        // Notificar Telegram
+                        sendHandoverNotify(pName, phone, logMessage, 'MULTIMEDIA', clientData.id).catch(() => {});
+                        incomingText = logMessage;
+                        console.log(`[Handler] Media ${mType} procesado y guardado en storage.`);
+                    } catch (e: any) {
+                        console.error(`[Handler] Fallo procesando multimedia:`, e.message);
+                        // Fallback: guardar registro sin URL si falla la subida
+                        const failMessage = `[MEDIA:${mType.toUpperCase()}] (Fallo en subida a nube)`;
+                        await saveMessage(clientData.id, 'user', failMessage, botStatus, waTimestamp);
+                        sendHandoverNotify(pName, phone, failMessage, 'MULTIMEDIA', clientData.id).catch(() => {});
+                        incomingText = failMessage;
+                    }
+                } else {
+                    // Otros tipos de multimedia (documentos, etc.) — registro simple
+                    const simpleMessage = `[MEDIA:${mType.toUpperCase()}] (Sin pre-procesamiento)`;
+                    saveMessage(clientData.id, 'user', simpleMessage, botStatus, waTimestamp);
+                    sendHandoverNotify(pName, phone, simpleMessage, 'MULTIMEDIA', clientData.id).catch(() => {});
+                    incomingText = simpleMessage;
                 }
-
-                // Guardar en el historial
-                const logMessage = `[MULTIMEDIA: ${mType.toUpperCase()}] Archivo guardado como ${filename}`;
-                await saveMessage(clientData.id, 'user', logMessage, botStatus, waTimestamp);
-
-                // Notificar Telegram (DevOps bot — notificación simple)
-                sendHandoverNotify(pName, phone, logMessage, 'MULTIMEDIA').catch(() => {});
 
                 // CRM Bridge: Si tiene Topic en Telegram, reenviar el media al hilo
                 const tgThreadIdMedia = (clientData.metadata as any)?.telegram_thread_id;
@@ -110,7 +130,7 @@ export const handleIncomingMessage = async (message: any, contactInfo: any) => {
                 // Emitir al dashboard
                 pipelineEvents.emit('bot:message', {
                     direction: 'IN', name: pName, phone,
-                    text: logMessage,
+                    text: incomingText,
                     timestamp: new Date().toISOString(),
                 });
                 pipelineEvents.emit('bot:message', {
@@ -177,11 +197,20 @@ export const handleIncomingMessage = async (message: any, contactInfo: any) => {
         if (name && name !== 'Cliente WhatsApp' && name !== clientData.name) {
           try {
             const currentMeta = (clientData.metadata || {}) as any;
-            if (!currentMeta.wa_profile_name || currentMeta.wa_profile_name !== name) {
+            const nameIsPhone = /^[\d+\s()-]+$/.test(clientData.name || '');
+            
+            // Si el nombre actual es un teléfono y tenemos un nombre de perfil real, actualizamos el nombre principal
+            if (nameIsPhone && name && name !== 'Cliente WhatsApp') {
+              await supabase.from('clients').update({
+                name: name,
+                metadata: { ...currentMeta, wa_profile_name: name }
+              }).eq('id', clientData.id);
+              console.log(`[Handler] Nombre principal actualizado con perfil WA: ${clientData.name} → ${name}`);
+            } else if (!currentMeta.wa_profile_name || currentMeta.wa_profile_name !== name) {
+              // Si ya tiene nombre real, solo actualizamos el metadato por si acaso
               await supabase.from('clients').update({
                 metadata: { ...currentMeta, wa_profile_name: name }
               }).eq('id', clientData.id);
-              console.log(`[Handler] Nombre de WA actualizado: ${clientData.name} → perfil WA: ${name}`);
             }
           } catch (e) { /* silencioso */ }
         }
@@ -269,6 +298,35 @@ async function _executeDecision(
 ) {
     switch (decision.action) {
 
+        // ── Respuesta puente → mensaje breve + auto-avanzar a Step 2 ─────────
+        case 'RESPOND': {
+            console.log(`[Handler] Sebastian → RESPOND para ${name} (confirmación implícita)`);
+
+            const respondVariants = SCRIPT_VARIANTS.RESPOND_BRIDGE;
+            const bridgeMsg = uniquifyMessage(respondVariants[Math.floor(Math.random() * respondVariants.length)]);
+
+            try {
+                await MetaClient.sendTextMessage(phone, bridgeMsg);
+                await saveMessage(clientData.id, 'bot', bridgeMsg, stage);
+                console.log(`[Handler] Puente enviado a ${name}: "${bridgeMsg}"`);
+
+                pipelineEvents.emit('bot:message', {
+                    direction: 'OUT', name, phone,
+                    text: bridgeMsg, botStatus: stage,
+                    timestamp: new Date().toISOString(),
+                });
+            } catch (e) {
+                console.error(`[Handler] Error enviando puente a ${name}:`, e);
+            }
+
+            // Pausa natural antes de enviar la propuesta (simula que está preparando el material)
+            await new Promise(r => setTimeout(r, HumanLikeDelays.conversationPause('normal')));
+
+            // Auto-avanzar a Step 2 (propuesta con collage)
+            await Automator.proceedToStep2(clientData);
+            break;
+        }
+
         // ── Avanzar a Step 2: collage + propuesta ────────────────────────────
         case 'ADVANCE_PROPOSAL': {
             console.log(`[Handler] Sebastian → ADVANCE_PROPOSAL para ${name}`);
@@ -291,7 +349,11 @@ async function _executeDecision(
             await updateBotStatus(clientData.id, 'HANDOVER_CLIMAX');
 
             const tags = Array.from(new Set([...(clientData.tags || []), 'lead']));
-            await supabase.from('clients').update({ status: 'contactado', tags }).eq('id', clientData.id);
+            await supabase.from('clients').update({ 
+                status: 'contactado', 
+                tags,
+                is_board_suggested: true 
+            }).eq('id', clientData.id);
 
             try {
                 await MetaClient.sendTextMessage(phone, msg);
@@ -307,7 +369,7 @@ async function _executeDecision(
                 console.error(`[Handler] Error enviando bridge climax a ${name}:`, e);
             }
 
-            await sendHandoverNotify(name, phone, clientMessage, 'CLIMAX').catch(() => {});
+            await sendHandoverNotify(name, phone, clientMessage, 'CLIMAX', clientData.id).catch(() => {});
 
             // Auto-crear puente Telegram CRM para leads calientes
             initiateTakeoverBridge(clientData.id, 'auto_handoff').catch(e => {
@@ -342,7 +404,7 @@ async function _executeDecision(
                 console.error(`[Handler] Error enviando handover a ${name}:`, e);
             }
 
-            await sendHandoverNotify(name, phone, clientMessage, 'QUESTION').catch(() => {});
+            await sendHandoverNotify(name, phone, clientMessage, 'QUESTION', clientData.id).catch(() => {});
 
             // Auto-crear puente Telegram CRM para handovers
             initiateTakeoverBridge(clientData.id, 'auto_handoff').catch(e => {

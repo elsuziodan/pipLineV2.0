@@ -3,19 +3,20 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Kanban, MessageSquare, LayoutDashboard } from "lucide-react";
+import { Kanban, MessageSquare, LayoutDashboard, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Tablero de Producción", href: "/", icon: Kanban },
   { name: "Auditoría IA", href: "/auditoria-ia", icon: MessageSquare },
+  { name: "Bóveda de Ventas", href: "/boveda", icon: Archive },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col w-56 bg-[#0E0F11] border-r border-[#26282B] h-full relative z-20">
+    <div className="hidden md:flex flex-col w-56 bg-[#0E0F11] border-r border-[#26282B] h-full relative z-20">
       <div className="flex items-center h-14 px-5">
         <div className="w-6 h-6 flex items-center justify-center mr-2 relative">
           <Image src="/7f-logo.png" alt="7F Logo" fill className="object-contain" />

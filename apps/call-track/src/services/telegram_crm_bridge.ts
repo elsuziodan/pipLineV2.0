@@ -99,7 +99,7 @@ export async function initiateTakeoverBridge(
     );
 
     // 5. Crear Topic en Telegram
-    // Prioridad: nombre_negocio (si existe) -> name (nombre del taller) -> teléfono
+    // Prioridad: nombre_negocio (si existe) -> name (nombre unificado) -> teléfono
     const topicName = (client as any).nombre_negocio || client.name || `+${phoneDisplay}`;
     const threadId = await createForumTopic(topicName);
 
@@ -157,7 +157,14 @@ export function formatTakeoverLog(
 
   let historyBlock = '';
   if (history.length > 0) {
-    historyBlock = history.map(m => {
+    // Deduplicar mensajes consecutivos idénticos del mismo remitente
+    const dedupedHistory = history.filter((m, i) => {
+        if (i === 0) return true;
+        const prev = history[i - 1];
+        return !(m.role === prev.role && m.message === prev.message);
+    });
+
+    historyBlock = dedupedHistory.map(m => {
       let timeStr = '';
       if (m.wa_timestamp) {
         const d = new Date(m.wa_timestamp * 1000);
@@ -340,13 +347,20 @@ export async function sendWhatsAppMediaToTelegram(
 export async function sendTelegramTextToWhatsApp(
   phone: string,
   text: string,
-  clientId: string
+  clientId: string,
+  threadId?: number  // NUEVO parámetro
 ): Promise<void> {
   try {
     const normalizedPhone = normalizeToInternational(phone);
 
     await MetaClient.sendTextMessage(normalizedPhone, text);
     await saveMessage(clientId, 'bot', text, 'HANDOVER_MANUAL');
+
+    // Confirmación visual en el Topic de Telegram
+    if (threadId) {
+        const now = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        await sendTextToThread(threadId, `✅ Enviado a WhatsApp · ${now}`);
+    }
 
     // Notificar al Dashboard
     pipelineEvents.emit('bot:message', {
@@ -361,6 +375,10 @@ export async function sendTelegramTextToWhatsApp(
     console.log(`[CRM Bridge] Reply enviado a WhatsApp ${normalizedPhone}: "${text.substring(0, 50)}..."`);
   } catch (err: any) {
     console.error(`[CRM Bridge] Error enviando reply a WhatsApp:`, err.response?.data || err.message);
+    // Notificar error en el Topic
+    if (threadId) {
+        await sendTextToThread(threadId, `❌ Error enviando a WhatsApp`).catch(() => {});
+    }
   }
 }
 
@@ -508,4 +526,22 @@ export async function getClientByThreadId(threadId: number): Promise<any | null>
  */
 export function getCrmBotId(): number {
   return TG_BOT_ID;
+}
+
+// ── Cerrar Topic de Telegram cuando se archiva un lead ───────────────────────
+
+/**
+ * Cierra el Forum Topic de un cliente en Telegram.
+ * Se llama al archivar a La Bóveda.
+ */
+export async function closeClientTopic(threadId: number): Promise<void> {
+    try {
+        await axios.post(`${TG_API}/closeForumTopic`, {
+            chat_id: TG_CHAT_ID,
+            message_thread_id: threadId,
+        });
+        console.log(`[CRM Bridge] Topic ${threadId} cerrado en Telegram`);
+    } catch (err: any) {
+        console.error('[CRM Bridge] Error cerrando Topic:', err.response?.data || err.message);
+    }
 }

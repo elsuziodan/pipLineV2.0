@@ -2,11 +2,6 @@
  * conversations.ts
  * ─────────────────
  * Helper de Supabase para la tabla `conversations`.
- *
- * Esta tabla es la memoria real del bot:
- *   - Guarda cada mensaje (bot y usuario) con su timestamp exacto de WhatsApp
- *   - Permite a Sebastian ver el historial completo de cada conversación
- *   - Reemplaza el campo `last_bot_message` en metadata (workaround eliminado)
  */
 
 import { supabase } from './supabase.js';
@@ -16,18 +11,13 @@ export interface ConversationMessage {
   message:      string;
   stage?:       string;
   wa_timestamp?: number;
+  media_url?:    string;
+  media_type?:   'audio' | 'image';
   created_at?:  string;
 }
 
 /**
  * Guarda un mensaje en el historial de conversación.
- *
- * @param clientId    - UUID del cliente en Supabase
- * @param role        - 'bot' si lo envió Sebastian, 'user' si lo recibió
- * @param message     - Texto del mensaje
- * @param stage       - Estado del bot en ese momento (SENT_GREETING, etc.)
- * @param waTimestamp - Timestamp real de WhatsApp en segundos Unix (opcional;
- *                      si no se provee se usa el tiempo actual)
  */
 export async function saveMessage(
   clientId:    string,
@@ -35,10 +25,11 @@ export async function saveMessage(
   message:     string,
   stage:       string,
   waTimestamp?: number,
+  mediaUrl?:    string,
+  mediaType?:   'audio' | 'image'
 ): Promise<void> {
   const timestamp = waTimestamp ?? Math.floor(Date.now() / 1000);
   
-  // Deduplicación: evitar guardar el mismo mensaje del bot dos veces en 5 segundos
   if (role === 'bot') {
     const { data: recent } = await supabase
       .from('conversations')
@@ -55,20 +46,18 @@ export async function saveMessage(
     }
   }
 
-  // 1. Guardar mensaje en conversaciones
   const { error } = await supabase.from('conversations').insert({
     client_id:    clientId,
     role,
     message,
     stage,
-    wa_timestamp: timestamp,
+    wa_timestamp: timestamp
   });
 
   if (error) {
     console.error('[Conversations] Error guardando mensaje:', error.message);
   }
 
-  // 2. Actualizar 'last_activity' en el cliente para el Dashboard
   try {
     const { data: client } = await supabase.from('clients').select('metadata').eq('id', clientId).single();
     const newMetadata = { 
@@ -76,28 +65,28 @@ export async function saveMessage(
       last_activity: new Date(timestamp * 1000).toISOString() 
     };
     await supabase.from('clients').update({ metadata: newMetadata }).eq('id', clientId);
-  } catch (e) {
-    // Silencioso
-  }
+  } catch (e) {}
 }
 
 /**
  * Obtiene el historial de conversación de un cliente.
- *
- * Devuelve los últimos `limit` mensajes en orden cronológico (más viejo primero),
- * para que la IA pueda leer la conversación de forma natural.
- *
- * @param clientId - UUID del cliente
- * @param limit    - Máximo de mensajes (default 10 = ~5 intercambios)
  */
 export async function getHistory(
   clientId: string,
   limit = 10,
 ): Promise<ConversationMessage[]> {
+  console.log('[DEBUG] getHistory clientId:', clientId);  let targetClientId = clientId;
+  if (!clientId.includes('-')) {
+    const cleanPhone = clientId.replace(' ', '+');
+    const { data } = await supabase.from('clients').select('id').eq('phone', cleanPhone).single();
+    if (data) targetClientId = data.id;
+    else return [];
+  }
+
   const { data, error } = await supabase
     .from('conversations')
     .select('role, message, stage, wa_timestamp, created_at')
-    .eq('client_id', clientId)
+    .eq('client_id', targetClientId)
     .order('wa_timestamp', { ascending: false })
     .limit(limit);
 
@@ -106,12 +95,50 @@ export async function getHistory(
     return [];
   }
 
-  // Invertir para que queden en orden cronológico (más viejo primero)
   return ((data || []) as ConversationMessage[]).reverse();
 }
 
 /**
- * Obtiene la lista de contactos recientes que tienen historial de bot.
+ * Obtiene el historial de conversación de un cliente con paginación por cursor.
+ */
+export async function getHistoryPaginated(
+  clientId: string,
+  limit = 20,
+  cursor?: string
+): Promise<{ messages: ConversationMessage[]; nextCursor: string | null }> {
+  console.log('[DEBUG] getHistory clientId:', clientId);  let targetClientId = clientId;
+  if (!clientId.includes('-')) {
+    const cleanPhone = clientId.replace(' ', '+');
+    const { data } = await supabase.from('clients').select('id').eq('phone', cleanPhone).single();
+    if (data) targetClientId = data.id;
+    else return { messages: [], nextCursor: null };
+  }
+
+  let query = supabase
+    .from('conversations')
+    .select('id, role, message, stage, wa_timestamp, created_at')
+    .eq('client_id', targetClientId)
+    .order('created_at', { ascending: false })
+    .limit(limit + 1);
+
+  if (cursor) query = query.lt('created_at', cursor);
+
+  const { data, error } = await query;
+  if (error || !data) {
+    console.error('[Conversations] Error en paginación:', error?.message);
+    return { messages: [], nextCursor: null };
+  }
+
+  const hasMore = data.length > limit;
+  const messagesBatch = hasMore ? data.slice(0, limit) : data;
+  const messages = [...messagesBatch].reverse();
+  const nextCursor = hasMore ? messagesBatch[messagesBatch.length - 1].created_at : null;
+
+  return { messages, nextCursor };
+}
+
+/**
+ * Obtiene la lista de contactos recientes.
  */
 export async function getRecentContacts() {
   const { data, error } = await supabase

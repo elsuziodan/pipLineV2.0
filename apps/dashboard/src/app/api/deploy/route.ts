@@ -3,10 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 // Importación corregida a nivel local del dashboard
 import { deployLandingPage } from '@/services/vercel_deployer';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Verified Unsplash image banks by industry category
 const IMAGE_BANKS: Record<string, { hero: string; gallery: string[] }> = {
@@ -59,6 +55,11 @@ function detectCategory(text: string): string {
 export async function POST(req: Request) {
   try {
     const { clientId, clientName, rawData } = await req.json();
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     if (!clientId || !clientName) {
       return NextResponse.json({ error: "Missing clientId or clientName" }, { status: 400 });

@@ -57,8 +57,10 @@ async function start() {
         triggerAgentLoop(false);
     });
 
-    // NO autoarrancar el bot — el usuario lo inicia desde el Dashboard
-    // (cuando no hay un orquestador activo, arrancar manualmente con triggerAgentLoop(true))
+    // Autoarrancar el bot para que procese la cola de leads pendientes
+    console.log('🚀 [Main] Auto-arranque de ciclo de prospección...');
+    triggerAgentLoop(true);
+
     // Graceful shutdown
     const gracefulShutdown = async (signal: string) => {
       console.log(`\n🛑 [Main] ${signal} recibido. Cerrando limpiamente...`);
