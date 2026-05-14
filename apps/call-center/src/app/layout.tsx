@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/Toaster";
@@ -22,8 +22,22 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Call Center — Seven Factor",
-  description: "Sales prospecting dashboard for telephone cold calling",
+  title: "Terminal de Operaciones",
+  description: "Centro de operaciones de ventas — Seven Factor",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Terminal",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#080C14",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -33,11 +47,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark">
+      <head>
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body
         className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
       >
         {children}
         <Toaster />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 
 import { Phone, MessageCircle, Star } from "lucide-react";
 import type { Lead } from "@/lib/types";
-import { getMetaStr, getMetaNum, getTierClass } from "@/lib/types";
+import { getMetaStr, getMetaNum, getTierClass, normalizePhone } from "@/lib/types";
 
 interface LeadCardProps {
   lead: Lead;
@@ -30,8 +30,8 @@ export function LeadCard({ lead, isActive, onClick, callOutcomes }: LeadCardProp
     return "var(--color-neutral)";
   };
 
-  const phone = lead.phone?.replace(/\D/g, "") || "";
-  const waLink = `https://wa.me/52${phone}?text=${encodeURIComponent(WA_TEMPLATE)}`;
+  const phoneInfo = normalizePhone(lead.phone);
+  const waLink = phoneInfo.waLinkBase ? `https://wa.me/${phoneInfo.waLinkBase}?text=${encodeURIComponent(WA_TEMPLATE)}` : '#';
 
   return (
     <div
@@ -91,7 +91,7 @@ export function LeadCard({ lead, isActive, onClick, callOutcomes }: LeadCardProp
       {/* Action buttons */}
       <div className="flex items-center gap-2 shrink-0">
         <a
-          href={`tel:+52${phone}`}
+          href={phoneInfo.linkBase ? `tel:+${phoneInfo.linkBase}` : '#'}
           onClick={(e) => e.stopPropagation()}
           className="flex items-center justify-center transition-all"
           title="Llamar"

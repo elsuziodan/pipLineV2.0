@@ -33,15 +33,10 @@ export function Sidebar({ active = "prospecting", onViewChange, collectionUrgent
             onClick={() => onViewChange?.(item.id)}
             className={`relative flex flex-col md:flex-row items-center justify-center transition-all w-11 h-11 rounded-md border-none cursor-pointer ${
               isActive 
-                ? "sidebar-btn-active bg-[rgba(0,229,204,0.10)] text-[var(--color-accent-aqua)]" 
+                ? "sidebar-btn-active text-[var(--color-accent-aqua)]" 
                 : "text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--color-text-primary)]"
             }`}
           >
-            {/* The active indicator bar for desktop is added via globals.css .sidebar-btn-active::before */}
-            {/* For mobile, we add a dot indicator above the icon if active */}
-            {isActive && (
-              <div className="absolute top-1 w-1 h-1 rounded-full bg-[var(--color-accent-aqua)] shadow-[0_0_8px_rgba(0,229,204,0.6)] md:hidden"></div>
-            )}
             
             <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
             

@@ -17,6 +17,7 @@ import {
   getMetaBool,
   getTierClass,
   getPitchClass,
+  normalizePhone,
 } from "@/lib/types";
 import { CallLogger } from "./CallLogger";
 import { CallHistory } from "./CallHistory";
@@ -63,11 +64,9 @@ export function LeadProfile({ lead, onCallSaved }: LeadProfileProps) {
       ? services
       : "";
 
-  const phone = lead.phone?.replace(/\D/g, "") || "";
-  const phoneDisplay = lead.phone || "Sin teléfono";
-
+  const phoneInfo = normalizePhone(lead.phone);
   const WA_TEMPLATE = `¡Hola! Soy Daniel de Seven Factor 👋\nHace un momento hablamos por teléfono sobre el diseño de su página web.\nLe envío este mensaje para que tenga mi contacto directo.`;
-  const waLink = `https://wa.me/52${phone}?text=${encodeURIComponent(WA_TEMPLATE)}`;
+  const waLink = phoneInfo.waLinkBase ? `https://wa.me/${phoneInfo.waLinkBase}?text=${encodeURIComponent(WA_TEMPLATE)}` : '#';
 
   const handleCallSaved = () => {
     setRefreshKey((k) => k + 1);
@@ -131,8 +130,8 @@ export function LeadProfile({ lead, onCallSaved }: LeadProfileProps) {
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <Smartphone size={16} style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
-            <span className="font-data flex-1" style={{ fontSize: 14 }}>{phoneDisplay}</span>
-            <a href={`tel:+52${phone}`} className="btn-call" style={{ padding: "6px 12px", fontSize: 12 }}>
+            <span className="font-data flex-1" style={{ fontSize: 14 }}>{phoneInfo.display}</span>
+            <a href={phoneInfo.linkBase ? `tel:+${phoneInfo.linkBase}` : '#'} className="btn-call" style={{ padding: "6px 12px", fontSize: 12 }}>
               <span className="flex items-center gap-1"><Phone size={12} /> Llamar</span>
             </a>
           </div>
@@ -204,6 +203,7 @@ export function LeadProfile({ lead, onCallSaved }: LeadProfileProps) {
         {/* Deep Research + WhatsApp */}
         <div className="flex flex-col gap-2" style={{ marginTop: 16 }}>
           <DeepResearch
+            key={lead.id}
             clientId={lead.id}
             cachedData={lead.metadata?.deep_research as any}
           />

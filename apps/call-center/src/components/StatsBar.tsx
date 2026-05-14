@@ -41,7 +41,7 @@ const METRICS = [
 export function StatsBar({ stats }: StatsBarProps) {
   return (
     <div
-      className="flex gap-3"
+      className="stats-bar flex gap-3"
       style={{ padding: "16px 20px 8px" }}
     >
       {METRICS.map((metric) => {

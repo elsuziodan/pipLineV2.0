@@ -34,7 +34,7 @@ export function CallQueue({
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Filter pills */}
-      <div className="flex gap-2 flex-wrap" style={{ padding: "0 0 12px" }}>
+      <div className="filter-strip flex gap-2 flex-wrap" style={{ padding: "0 0 12px" }}>
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -48,7 +48,7 @@ export function CallQueue({
 
       {/* Lead list */}
       <div
-        className="flex-1 overflow-y-auto flex flex-col gap-1"
+        className="lead-list flex-1 overflow-y-auto flex flex-col gap-1"
         key={filter} /* Reset staggered animations on filter change */
       >
         {loading ? (

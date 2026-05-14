@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Search, Star, Clock, Mail, Globe, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface DeepResearchData {
   success: boolean;
@@ -58,9 +59,42 @@ export function DeepResearch({ clientId, cachedData }: DeepResearchProps) {
         return;
       }
 
-      setData(json.data);
-      setStatus("success");
-      setExpanded(true);
+      // If cached, we get data directly
+      if (json.cached) {
+        setData(json.data);
+        setStatus("success");
+        setExpanded(true);
+        return;
+      }
+
+      // If not cached, we get a job_id and wait for Realtime
+      const jobId = json.job_id;
+      
+      const channel = supabase.channel(`research_${jobId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'research_jobs',
+            filter: `id=eq.${jobId}`
+          },
+          (payload) => {
+            const updatedJob = payload.new;
+            if (updatedJob.status === 'completed') {
+              setData(updatedJob.result);
+              setStatus("success");
+              setExpanded(true);
+              supabase.removeChannel(channel);
+            } else if (updatedJob.status === 'error') {
+              setError(updatedJob.error_message || "Error en la investigación");
+              setStatus("error");
+              supabase.removeChannel(channel);
+            }
+          }
+        )
+        .subscribe();
+
     } catch (err) {
       setError("Error de conexión");
       setStatus("error");

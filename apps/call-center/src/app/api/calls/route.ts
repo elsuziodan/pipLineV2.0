@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
         type: "outbound",
         outcome,
         follow_up_at: follow_up_at || null,
-        call_source,
       })
       .select()
       .single();

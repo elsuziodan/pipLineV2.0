@@ -23,7 +23,7 @@ export function NavigationBar({
 }: NavigationBarProps) {
   return (
     <div
-      className="flex items-center justify-between shrink-0"
+      className="nav-bar flex items-center justify-between shrink-0"
       style={{ padding: "8px 0 0" }}
     >
       <button
