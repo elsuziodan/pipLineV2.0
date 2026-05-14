@@ -41,13 +41,14 @@ export function useCallQueue() {
   const fetchCalls = useCallback(async () => {
     const { data } = await supabase
       .from("calls")
-      .select("client_id, outcome");
+      .select("client_id, metadata");
 
     if (data) {
       const map: Record<string, string[]> = {};
-      data.forEach((c: { client_id: string; outcome?: string }) => {
+      data.forEach((c: { client_id: string; metadata?: any }) => {
+        const outcome = c.metadata?.outcome;
         if (!map[c.client_id]) map[c.client_id] = [];
-        if (c.outcome) map[c.client_id].push(c.outcome);
+        if (outcome) map[c.client_id].push(outcome);
       });
       setCalls(map);
     }
