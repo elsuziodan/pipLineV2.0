@@ -35,26 +35,33 @@ export function LeadCard({ lead, isActive, onClick, callOutcomes }: LeadCardProp
 
   return (
     <div
-      className={`lead-row ${isActive ? "lead-row-active" : ""}`}
+      className={`group flex items-center p-4 rounded-2xl border transition-all duration-300 cursor-pointer gap-3 mb-2 ${
+        isActive 
+          ? "bg-white border-[var(--color-accent-aqua)] shadow-[var(--shadow-glow-aqua)] transform scale-[1.01]" 
+          : "bg-white/60 border-[var(--color-border)] hover:bg-white hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5"
+      }`}
       onClick={onClick}
     >
-      {/* Status indicator bar */}
-      <div
+      {/* Avatar */}
+      <div 
+        className="flex items-center justify-center rounded-xl shrink-0 font-display font-bold text-sm"
         style={{
-          width: 3,
-          height: 36,
-          borderRadius: 2,
-          background: getIndicatorColor(),
-          flexShrink: 0,
+          width: 42,
+          height: 42,
+          background: isActive ? "var(--color-accent-aqua)" : "var(--color-bg-hover)",
+          color: isActive ? "white" : "var(--color-text-secondary)",
+          transition: "all 0.3s ease"
         }}
-      />
+      >
+        {lead.name.substring(0, 2).toUpperCase()}
+      </div>
 
       {/* Lead info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span
             className="font-display truncate"
-            style={{ fontSize: 15, fontWeight: 600 }}
+            style={{ fontSize: 16, fontWeight: 700, color: isActive ? "var(--color-text-primary)" : "var(--color-text-primary)" }}
           >
             {lead.name}
           </span>
@@ -76,8 +83,8 @@ export function LeadCard({ lead, isActive, onClick, callOutcomes }: LeadCardProp
               className="flex items-center gap-1 shrink-0"
               style={{ fontSize: 12 }}
             >
-              <Star size={11} fill="#FFB800" color="#FFB800" />
-              <span style={{ color: "#FFB800" }}>{rating}</span>
+              <Star size={11} fill="var(--color-text-tertiary)" color="var(--color-text-tertiary)" />
+              <span style={{ color: "var(--color-text-secondary)" }}>{rating}</span>
               {reviewCount > 0 && (
                 <span style={{ color: "var(--color-text-tertiary)" }}>
                   ({reviewCount})
@@ -89,40 +96,36 @@ export function LeadCard({ lead, isActive, onClick, callOutcomes }: LeadCardProp
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         <a
           href={phoneInfo.linkBase ? `tel:+${phoneInfo.linkBase}` : '#'}
           onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-center transition-all"
+          className="flex items-center justify-center transition-all hover:bg-[var(--color-bg-hover)]"
           title="Llamar"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: "rgba(76,111,255,0.12)",
-            border: "1px solid rgba(76,111,255,0.25)",
-            color: "var(--color-accent-blue)",
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            color: "var(--color-text-tertiary)",
           }}
         >
-          <Phone size={16} />
+          <Phone size={14} />
         </a>
         <a
           href={waLink}
           target="_blank"
           rel="noopener"
           onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-center transition-all"
+          className="flex items-center justify-center transition-all hover:bg-[var(--color-bg-hover)]"
           title="WhatsApp"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: "rgba(37,211,102,0.12)",
-            border: "1px solid rgba(37,211,102,0.25)",
-            color: "#25D366",
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            color: "var(--color-text-tertiary)",
           }}
         >
-          <MessageCircle size={16} />
+          <MessageCircle size={14} />
         </a>
       </div>
     </div>

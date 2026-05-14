@@ -181,27 +181,21 @@ export function DeepResearch({ clientId, cachedData }: DeepResearchProps) {
 
       {expanded && (
         <div className="animate-fadeIn flex flex-col gap-4" style={{ marginTop: 8 }}>
-          {/* Photos carousel */}
+          {/* Photos Masonry/Grid */}
           {data.photos.length > 0 && (
-            <div>
+            <div className="mt-2">
               <span style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 📸 Fotos
               </span>
-              <div className="flex gap-2 overflow-x-auto" style={{ marginTop: 6, paddingBottom: 4 }}>
-                {data.photos.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt={`Foto ${i + 1}`}
-                    style={{
-                      width: 120,
-                      height: 90,
-                      objectFit: "cover",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--color-border)",
-                      flexShrink: 0,
-                    }}
-                  />
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {data.photos.slice(0, 4).map((url, i) => (
+                  <div key={i} className={`relative overflow-hidden rounded-xl border border-[var(--color-border)] shadow-sm ${i === 0 ? 'col-span-2 aspect-[2/1]' : 'col-span-1 aspect-square'}`}>
+                    <img
+                      src={url}
+                      alt={`Foto ${i + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                  </div>
                 ))}
               </div>
             </div>

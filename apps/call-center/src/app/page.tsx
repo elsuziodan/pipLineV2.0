@@ -105,7 +105,7 @@ export default function CallCenterPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden main-content">
+    <div className="flex h-screen overflow-hidden main-content md:p-4 md:gap-4">
       <Sidebar active={activeView} onViewChange={setActiveView} collectionUrgentCount={collectionUrgentCount} />
 
       <div
@@ -116,9 +116,9 @@ export default function CallCenterPage() {
           <div key="prospecting" className="flex flex-col h-full animate-fadeIn">
             <StatsBar stats={stats} />
 
-            <div className="flex-1 flex overflow-hidden p-4 gap-4 relative">
+            <div className="flex-1 flex overflow-hidden p-0 md:p-4 gap-0 md:gap-4 relative">
               {/* Left panel: Queue */}
-              <div className="flex flex-col min-w-0 gap-1 queue-panel" style={{ width: "57%" }}>
+              <div className="flex flex-col min-w-0 gap-2 queue-panel md:bg-white/60 md:backdrop-blur-xl md:rounded-[24px] md:shadow-[var(--shadow-elevated)] md:border md:border-[var(--color-border)] p-2 md:p-4" style={{ width: "57%" }}>
                 <CallQueue
                   leads={leads}
                   selectedIndex={selectedIndex}
@@ -146,7 +146,7 @@ export default function CallCenterPage() {
                   display: 'none',
                   position: 'fixed',
                   inset: 0,
-                  background: 'rgba(0,0,0,0.5)',
+                  background: 'rgba(0,0,0,0.15)',
                   zIndex: 54,
                   opacity: 0,
                   pointerEvents: 'none',
@@ -158,15 +158,14 @@ export default function CallCenterPage() {
               {/* Right panel: Profile */}
               <div 
                 ref={drawerRef}
-                className={`min-w-0 profile-panel ${selectedLead ? 'open' : ''}`} 
+                className={`min-w-0 profile-panel md:bg-white/60 md:backdrop-blur-xl md:rounded-[24px] md:shadow-[var(--shadow-elevated)] md:border md:border-[var(--color-border)] ${selectedLead ? 'open' : ''}`} 
                 style={{ width: "43%", overscrollBehavior: 'contain' }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                {/* Mobile drag handle + close */}
                 <div 
-                  className="profile-drawer-handle items-center justify-center pt-3 pb-2"
+                  className="profile-drawer-handle flex items-center justify-center pt-3 pb-2"
                   style={{ display: 'none' }}
                 >
                   <div 
@@ -174,7 +173,7 @@ export default function CallCenterPage() {
                       width: 36,
                       height: 4,
                       borderRadius: 2,
-                      background: 'rgba(255,255,255,0.2)',
+                      background: '#D1D5DB', // Light gray for white theme
                       cursor: 'pointer',
                     }}
                     onClick={closeDrawer}

@@ -52,15 +52,11 @@ export function Toaster() {
           className="toast pointer-events-auto"
           style={{
             borderColor: 
-              t.type === 'success' ? 'rgba(0,255,136,0.5)' : 
-              t.type === 'warning' ? 'rgba(255,184,0,0.5)' : 
-              t.type === 'error' ? 'rgba(255,68,102,0.5)' : 
-              'rgba(0,229,204,0.5)',
-            boxShadow: 
-              t.type === 'success' ? 'var(--shadow-glow-success)' : 
-              t.type === 'warning' ? '0 0 16px rgba(255,184,0,0.2)' : 
-              t.type === 'error' ? 'var(--shadow-glow-danger)' : 
-              'var(--shadow-glow-aqua)'
+              t.type === 'success' ? '#BBF7D0' : 
+              t.type === 'warning' ? '#FDE68A' : 
+              t.type === 'error' ? '#FECACA' : 
+              '#BFDBFE',
+            boxShadow: 'var(--shadow-elevated)'
           }}
         >
           <div className="flex items-center gap-2">

@@ -19,7 +19,7 @@ interface SidebarProps {
 
 export function Sidebar({ active = "prospecting", onViewChange, collectionUrgentCount = 0 }: SidebarProps) {
   return (
-    <aside className="sidebar flex flex-col items-center py-6 gap-2 shrink-0 w-[60px] bg-[var(--color-bg-deep)] border-r border-[var(--color-border)]">
+    <aside className="sidebar flex flex-col items-center md:py-4 gap-2 shrink-0 md:w-auto bg-white border-t md:border md:border-[var(--color-border)] md:rounded-full md:shadow-[var(--shadow-card)] z-20 md:backdrop-blur-xl md:bg-white/60">
       {/* Nav items */}
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
@@ -34,7 +34,7 @@ export function Sidebar({ active = "prospecting", onViewChange, collectionUrgent
             className={`relative flex flex-col md:flex-row items-center justify-center transition-all w-11 h-11 rounded-md border-none cursor-pointer ${
               isActive 
                 ? "sidebar-btn-active text-[var(--color-accent-aqua)]" 
-                : "text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--color-text-primary)]"
+                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
             }`}
           >
             
@@ -47,7 +47,7 @@ export function Sidebar({ active = "prospecting", onViewChange, collectionUrgent
 
             {/* Notification badge */}
             {showBadge && (
-              <div className="sidebar-badge absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--color-danger)] shadow-[0_0_6px_rgba(255,68,102,0.5)]"></div>
+              <div className="sidebar-badge absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--color-danger)]"></div>
             )}
           </button>
         );
@@ -59,7 +59,7 @@ export function Sidebar({ active = "prospecting", onViewChange, collectionUrgent
       {/* Settings at bottom */}
       <button
         title="Settings"
-        className="hidden md:flex items-center justify-center transition-all w-10 h-10 rounded-md bg-transparent text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.05)] cursor-pointer border-none"
+        className="hidden md:flex items-center justify-center transition-all w-10 h-10 rounded-md bg-transparent text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer border-none"
       >
         <SlidersHorizontal size={20} />
       </button>

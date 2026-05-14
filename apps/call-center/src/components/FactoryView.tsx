@@ -9,7 +9,7 @@ export function FactoryView() {
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-4 md:p-8 animate-fadeIn overflow-y-auto">
       <div className="flex items-center justify-between mb-8 pb-4 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[var(--color-text-secondary)]">
+          <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-hover)] flex items-center justify-center text-[var(--color-text-secondary)]">
             <Hammer size={20} />
           </div>
           <div>

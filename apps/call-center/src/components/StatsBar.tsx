@@ -41,34 +41,24 @@ const METRICS = [
 export function StatsBar({ stats }: StatsBarProps) {
   return (
     <div
-      className="stats-bar flex gap-3"
-      style={{ padding: "16px 20px 8px" }}
+      className="stats-bar flex flex-wrap items-center justify-center gap-2 md:gap-4 md:rounded-full border-b md:border md:border-[var(--color-border)] bg-white/60 backdrop-blur-md md:shadow-[var(--shadow-card)] md:mx-auto md:mt-4 md:mb-2 z-10"
+      style={{ padding: "12px 24px" }}
     >
-      {METRICS.map((metric) => {
-        const Icon = metric.icon;
+      {METRICS.map((metric, index) => {
         const value = stats[metric.key];
         return (
-          <div
-            key={metric.key}
-            className={`metric-card flex-1 ${metric.hero ? "metric-card-hero" : ""}`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Icon
-                size={13}
-                style={{
-                  color: metric.hero
-                    ? "rgba(255,255,255,0.70)"
-                    : "var(--color-text-secondary)",
-                }}
-              />
-              <span className="metric-label">{metric.label}</span>
-            </div>
-            <div
-              className="metric-value"
-              style={{ color: metric.colorVar }}
-            >
+          <div key={metric.key} className="flex items-center gap-1 md:gap-2">
+            <span className="font-bold text-[var(--color-text-primary)] text-sm md:text-base">
               {stats.loading ? "—" : value}
-            </div>
+            </span>
+            <span className="text-[var(--color-text-secondary)] text-xs md:text-sm lowercase">
+              {metric.label}
+            </span>
+            {index < METRICS.length - 1 && (
+              <span className="text-[var(--color-text-tertiary)] mx-1 md:mx-2 hidden md:inline">
+                ·
+              </span>
+            )}
           </div>
         );
       })}

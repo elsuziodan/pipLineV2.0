@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Phone,
+  MessageCircle,
   Globe,
   MapPin,
   Smartphone,
@@ -75,69 +76,70 @@ export function LeadProfile({ lead, onCallSaved }: LeadProfileProps) {
 
   return (
     <div
-      className="card-elevated h-full overflow-y-auto"
-      style={{ padding: 24 }}
+      className="h-full overflow-y-auto"
+      style={{ padding: "32px 40px" }}
       key={lead.id}
     >
       <div className="animate-slideRight">
         {/* Header */}
         <h2
           className="font-display"
-          style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1.2 }}
+          style={{ fontSize: 32, fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1.1, color: "var(--color-text-primary)" }}
         >
           {lead.name}
         </h2>
 
-        {/* Rating */}
-        {rating > 0 && (
-          <div className="flex items-center gap-2" style={{ marginTop: 8 }}>
-            <div className="star-rating">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  size={14}
-                  fill={i < Math.floor(rating) ? "#FFB800" : "none"}
-                  color={i < Math.ceil(rating) ? "#FFB800" : "var(--color-text-tertiary)"}
-                />
-              ))}
+        {/* Rating & Badges Inline */}
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          {rating > 0 && (
+            <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-[var(--color-border)] shadow-sm">
+              <Star size={14} fill="#F59E0B" color="#F59E0B" />
+              <span className="font-bold text-[#F59E0B] text-sm">{rating}</span>
+              {reviewCount > 0 && <span className="text-xs text-[var(--color-text-tertiary)]">({reviewCount})</span>}
             </div>
-            <span className="font-data" style={{ fontSize: 13, color: "#FFB800" }}>
-              {rating}
-            </span>
-            {reviewCount > 0 && (
-              <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
-                ({reviewCount} reseñas)
-              </span>
-            )}
-          </div>
-        )}
+          )}
+          {tier && <span className={`pill ${getTierClass(tier)} px-3 py-1.5 shadow-sm bg-white`}>{tier.toUpperCase()}</span>}
+          {pitchFit && <span className={`pill ${getPitchClass(pitchFit)} px-3 py-1.5 shadow-sm bg-white`}>PITCH: {pitchFit.toUpperCase()}</span>}
+        </div>
 
-        {/* Badges */}
-        {(tier || pitchFit) && (
-          <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 10 }}>
-            {tier && <span className={`pill ${getTierClass(tier)}`}>{tier.toUpperCase()}</span>}
-            {pitchFit && (
-              <span className={`pill ${getPitchClass(pitchFit)}`}>
-                PITCH: {pitchFit.toUpperCase()}
-              </span>
-            )}
-          </div>
-        )}
+        {/* Massive Actions */}
+        <div className="grid grid-cols-2 gap-3 mt-8 mb-8">
+          <a
+            href={phoneInfo.linkBase ? `tel:+${phoneInfo.linkBase}` : '#'}
+            className="flex flex-col items-center justify-center py-4 rounded-2xl transition-all hover:-translate-y-1"
+            style={{
+              background: "linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)",
+              color: "white",
+              boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
+            }}
+          >
+            <Phone size={24} className="mb-2" />
+            <span className="font-bold text-sm tracking-wide">LLAMAR</span>
+          </a>
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener"
+            className="flex flex-col items-center justify-center py-4 rounded-2xl transition-all hover:-translate-y-1"
+            style={{
+              background: "linear-gradient(180deg, #10B981 0%, #059669 100%)",
+              color: "white",
+              boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
+            }}
+          >
+            <MessageCircle size={24} className="mb-2" />
+            <span className="font-bold text-sm tracking-wide">WHATSAPP</span>
+          </a>
+        </div>
 
-        <hr style={{ borderColor: "var(--color-border)", margin: "16px 0" }} />
-
-        {/* Contact info */}
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl border border-[var(--color-border)]">
             <Smartphone size={16} style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
-            <span className="font-data flex-1" style={{ fontSize: 14 }}>{phoneInfo.display}</span>
-            <a href={phoneInfo.linkBase ? `tel:+${phoneInfo.linkBase}` : '#'} className="btn-call" style={{ padding: "6px 12px", fontSize: 12 }}>
-              <span className="flex items-center gap-1"><Phone size={12} /> Llamar</span>
-            </a>
+            <span className="font-data flex-1 text-sm font-medium">{phoneInfo.display}</span>
           </div>
 
           {websiteUrl && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl border border-[var(--color-border)]">
               <Globe size={16} style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
               <span className="flex-1 truncate" style={{ fontSize: 13, color: "var(--color-accent-cyan)" }}>
                 {websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}

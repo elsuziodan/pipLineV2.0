@@ -9,12 +9,12 @@ interface CallLoggerProps {
   onSaved: () => void;
 }
 
-const OUTCOMES: { key: OutcomeType; label: string; emoji: string; className: string }[] = [
-  { key: "interesado", label: "Le interesó", emoji: "🟢", className: "outcome-interested" },
-  { key: "seguimiento", label: "Volver a llamar", emoji: "🟡", className: "outcome-callback" },
-  { key: "no_interesado", label: "No", emoji: "🔴", className: "outcome-rejected" },
-  { key: "no_contesta", label: "No contestó", emoji: "📵", className: "outcome-noanswer" },
-  { key: "equivocado", label: "Equivocado", emoji: "❌", className: "outcome-noanswer" },
+const OUTCOMES: { key: OutcomeType; label: string; dotClass: string; className: string }[] = [
+  { key: "interesado", label: "Le interesó", dotClass: "bg-green-500", className: "outcome-interested" },
+  { key: "seguimiento", label: "Volver a llamar", dotClass: "bg-yellow-500", className: "outcome-callback" },
+  { key: "no_interesado", label: "No", dotClass: "bg-red-500", className: "outcome-rejected" },
+  { key: "no_contesta", label: "No contestó", dotClass: "bg-gray-400", className: "outcome-noanswer" },
+  { key: "equivocado", label: "Equivocado", dotClass: "bg-gray-400", className: "outcome-noanswer" },
 ];
 
 export function CallLogger({ lead, onSaved }: CallLoggerProps) {
@@ -86,7 +86,8 @@ export function CallLogger({ lead, onSaved }: CallLoggerProps) {
             onClick={() => setSelectedOutcome(o.key)}
             style={{ fontSize: 12, padding: "6px 14px" }}
           >
-            {o.emoji} {o.label}
+            <span className={`w-2 h-2 rounded-full ${o.dotClass}`} />
+            {o.label}
           </button>
         ))}
       </div>
@@ -132,13 +133,13 @@ export function CallLogger({ lead, onSaved }: CallLoggerProps) {
           marginTop: 12,
           padding: "10px 20px",
           background: saved
-            ? "linear-gradient(135deg, #00FF88, #00D9A6)"
+            ? "#22C55E"
             : undefined,
         }}
         disabled={!selectedOutcome || saving}
         onClick={handleSave}
       >
-        {saving ? "Guardando..." : saved ? "✅ Guardado" : "GUARDAR"}
+        {saving ? "Guardando..." : saved ? "Guardado" : "GUARDAR"}
       </button>
     </div>
   );
