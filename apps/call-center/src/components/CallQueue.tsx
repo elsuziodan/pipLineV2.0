@@ -19,6 +19,7 @@ const FILTERS: { key: FilterType; label: string }[] = [
   { key: "uncontacted", label: "Sin contactar" },
   { key: "interested", label: "Interesados" },
   { key: "followup_today", label: "Seguimiento hoy" },
+  { key: "discarded", label: "Descartados" },
   { key: "top_tier", label: "Top Tier" },
 ];
 

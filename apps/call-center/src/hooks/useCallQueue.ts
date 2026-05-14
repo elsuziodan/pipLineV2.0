@@ -17,7 +17,6 @@ export function useCallQueue() {
     const { data, error } = await supabase
       .from("clients")
       .select("*")
-      .not("status", "eq", "perdido")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -62,18 +61,23 @@ export function useCallQueue() {
   const filteredLeads = allLeads.filter((lead) => {
     const clientCalls = calls[lead.id] || [];
     const today = new Date().toISOString().slice(0, 10);
+    const isLost = lead.status === "perdido";
 
     switch (filter) {
+      case "all":
+        return !isLost;
       case "uncontacted":
-        return clientCalls.length === 0;
+        return clientCalls.length === 0 && !isLost;
       case "interested":
-        return clientCalls.includes("interesado");
+        return clientCalls.includes("interesado") && !isLost;
       case "followup_today":
-        return lead.follow_up_date?.slice(0, 10) === today;
+        return lead.follow_up_date?.slice(0, 10) === today && !isLost;
       case "top_tier": {
         const tier = (lead.metadata?.prospect_tier as string) ?? "";
-        return tier === "top" || tier === "high";
+        return (tier === "top" || tier === "high") && !isLost;
       }
+      case "discarded":
+        return isLost;
       default:
         return true;
     }

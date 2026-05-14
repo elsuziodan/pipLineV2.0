@@ -51,7 +51,7 @@ export interface IntakeForm {
   updated_at: string;
 }
 
-export type FilterType = 'all' | 'uncontacted' | 'interested' | 'followup_today' | 'top_tier';
+export type FilterType = 'all' | 'uncontacted' | 'interested' | 'followup_today' | 'top_tier' | 'discarded';
 
 export type OutcomeType = 'interesado' | 'seguimiento' | 'no_interesado' | 'no_contesta' | 'equivocado';
 
