@@ -12,3 +12,9 @@ bin/
 
 # Mac OS
 .DS_Store
+\n# Node\nnode_modules/\n.next/\n.turbo/\ndist/\nbuild/
+node_modules/
+.next/
+.turbo/
+dist/
+build/
