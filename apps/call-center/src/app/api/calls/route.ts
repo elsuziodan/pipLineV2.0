@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY! || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 // POST — Register a call
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     // 2. Update client status/tags based on outcome
     const { data: client } = await supabase
       .from("clients")
-      .select("status, tags, metadata")
+      .select("status, tags, metadata, follow_up_date")
       .eq("id", client_id)
       .single();
 

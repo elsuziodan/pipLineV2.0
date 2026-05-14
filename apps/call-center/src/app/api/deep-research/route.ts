@@ -1,22 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import path from "path";
-import fs from "fs";
-
-const execFileAsync = promisify(execFile);
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-// Path to the scrapper Python environment
-const SCRAPPER_DIR = path.resolve(process.cwd(), "../scrapper");
-const PYTHON = path.join(SCRAPPER_DIR, "venv", "bin", "python");
-const SCRIPT = path.join(SCRAPPER_DIR, "src", "deep_research.py");
-const OUTPUT_DIR = "/tmp/deep_research";
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,8 +39,6 @@ export async function POST(request: NextRequest) {
     }
 
     const listingUrl = (metadata.listing_url as string) || "";
-    const websiteUrl = (metadata.website_url as string) || "";
-
     if (!listingUrl) {
       return NextResponse.json(
         { error: "No listing URL found for this client" },
@@ -60,77 +46,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure output directory exists
-    if (!fs.existsSync(OUTPUT_DIR)) {
-      fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-    }
-
-    const outputFile = path.join(OUTPUT_DIR, `${client_id}.json`);
-
-    // Check if Python and script exist
-    if (!fs.existsSync(PYTHON)) {
-      // Fallback: try system python
-      const fallbackPython = "python3";
-      try {
-        const args = [
-          SCRIPT,
-          "--listing-url", listingUrl,
-          ...(websiteUrl ? ["--website-url", websiteUrl] : []),
-          "--output", outputFile,
-          "--output-dir", OUTPUT_DIR,
-        ];
-
-        await execFileAsync(fallbackPython, args, {
-          timeout: 60000,
-          cwd: SCRAPPER_DIR,
-        });
-      } catch (execError) {
-        console.error("Deep research execution failed:", execError);
-        return NextResponse.json(
-          { error: "Deep research execution failed. Python or dependencies may be missing." },
-          { status: 500 }
-        );
-      }
-    } else {
-      // Use venv python
-      try {
-        const args = [
-          SCRIPT,
-          "--listing-url", listingUrl,
-          ...(websiteUrl ? ["--website-url", websiteUrl] : []),
-          "--output", outputFile,
-          "--output-dir", OUTPUT_DIR,
-        ];
-
-        await execFileAsync(PYTHON, args, {
-          timeout: 60000,
-          cwd: SCRAPPER_DIR,
-        });
-      } catch (execError) {
-        console.error("Deep research execution failed:", execError);
-        return NextResponse.json(
-          { error: "Deep research script failed" },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Read result
-    if (!fs.existsSync(outputFile)) {
-      return NextResponse.json({ error: "No output file generated" }, { status: 500 });
-    }
-
-    const resultJson = JSON.parse(fs.readFileSync(outputFile, "utf-8"));
-
-    // Save to client metadata
-    await supabase
-      .from("clients")
-      .update({
-        metadata: { ...metadata, deep_research: resultJson },
+    // Insert job into research_jobs table for the local worker to pick up
+    const { data: job, error: jobError } = await supabase
+      .from("research_jobs")
+      .insert({
+        client_id,
+        status: 'pending'
       })
-      .eq("id", client_id);
+      .select()
+      .single();
 
-    return NextResponse.json({ cached: false, data: resultJson });
+    if (jobError) {
+      console.error("Error creating research job:", jobError);
+      return NextResponse.json({ error: "Failed to create research job" }, { status: 500 });
+    }
+
+    return NextResponse.json({ cached: false, job_id: job.id });
 
   } catch (err) {
     console.error("Deep research API error:", err);

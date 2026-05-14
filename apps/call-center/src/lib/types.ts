@@ -99,3 +99,33 @@ export function getPitchClass(fit: string): string {
     default: return 'pill-weak';
   }
 }
+
+export function normalizePhone(rawPhone: string | undefined): { display: string; linkBase: string; waLinkBase: string } {
+  if (!rawPhone) return { display: "Sin teléfono", linkBase: "", waLinkBase: "" };
+  
+  let digits = rawPhone.replace(/\D/g, "");
+  if (!digits) return { display: "Sin teléfono", linkBase: "", waLinkBase: "" };
+
+  // Strip country code if already present to get a clean 10-digit local number
+  // Handles: 521XXXXXXXXXX (13 digits, old mobile format with 1)
+  if (digits.startsWith("521") && digits.length === 13) {
+    digits = digits.slice(3);
+  }
+  // Handles: 52XXXXXXXXXX (12 digits, standard with country code)
+  else if (digits.startsWith("52") && digits.length === 12) {
+    digits = digits.slice(2);
+  }
+  // If it's already 10 digits, use as-is (no stripping needed)
+  // If it's something else, use as-is and best-effort format
+
+  // At this point 'digits' should be the 10-digit local number
+  const formatted = digits.length === 10
+    ? digits.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3")
+    : digits;
+
+  return {
+    display: `+52 ${formatted}`,
+    linkBase: `52${digits}`,
+    waLinkBase: `52${digits}`
+  };
+}

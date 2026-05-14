@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { toast } from '@/components/Toaster';
 
@@ -17,6 +17,7 @@ export interface CollectionClient {
     amount_owed?: number;
     [key: string]: any;
   };
+  phone?: string;
   landing_url: string | null;
   board_moved_at: string | null;
 }
@@ -29,7 +30,7 @@ export function useCollection() {
     setLoading(true);
     const { data, error } = await supabase
       .from('clients')
-      .select('id, name, metadata, landing_url, board_moved_at')
+      .select('id, name, phone, metadata, landing_url, board_moved_at')
       .eq('status', 'LIQUIDADO')
       .order('board_moved_at', { ascending: false });
 

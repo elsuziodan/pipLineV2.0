@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CollectionClient, getDaysSinceLastContact } from '@/hooks/useCollection';
 import { PhoneOutgoing, MessageCircle, CheckCircle2, ChevronDown, ChevronUp, DollarSign, CornerUpLeft } from 'lucide-react';
+import { normalizePhone } from '@/lib/types';
 import { CollectionPopover } from './CollectionPopover';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -142,7 +143,7 @@ export function CollectionCard({ client, onAddEntry, onUpdateAmount, onMarkAsPai
               <PhoneOutgoing size={14} /> <span className="hidden sm:inline">MARCAR</span>
             </button>
             <a 
-              href={`https://wa.me/52${client.phone?.replace(/\D/g,'')}?text=${encodeURIComponent(WA_COLLECTION)}`}
+              href={`https://wa.me/${normalizePhone(client.phone).waLinkBase}?text=${encodeURIComponent(WA_COLLECTION)}`}
               target="_blank"
               rel="noreferrer"
               className="btn-whatsapp flex items-center justify-center w-8 h-8 p-0"

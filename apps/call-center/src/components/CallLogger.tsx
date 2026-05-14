@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Lead, OutcomeType } from "@/lib/types";
+import { toast } from "@/components/Toaster";
 
 interface CallLoggerProps {
   lead: Lead;
@@ -43,6 +44,7 @@ export function CallLogger({ lead, onSaved }: CallLoggerProps) {
 
       if (res.ok) {
         setSaved(true);
+        toast.success("Llamada guardada correctamente");
         setTimeout(() => {
           setSaved(false);
           setSelectedOutcome(null);
@@ -50,9 +52,13 @@ export function CallLogger({ lead, onSaved }: CallLoggerProps) {
           setFollowUpDate("");
           onSaved();
         }, 2000);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || "Error al guardar la llamada");
       }
     } catch (err) {
       console.error("Error saving call:", err);
+      toast.error("Error de conexión al guardar");
     } finally {
       setSaving(false);
     }
