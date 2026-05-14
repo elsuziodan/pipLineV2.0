@@ -20,7 +20,7 @@ export function useCallStats(): CallStats & { loading: boolean } {
     const { count: interestedCount } = await supabase
       .from("calls")
       .select("*", { count: "exact", head: true })
-      .eq("metadata->>outcome", "interesado")
+      .eq("outcome", "interesado")
       .gte("created_at", `${today}T00:00:00`);
 
     // Follow-ups today — clients with follow_up_date = today

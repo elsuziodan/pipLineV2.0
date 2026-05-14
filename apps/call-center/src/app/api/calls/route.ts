@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         client_id,
         notes: notes || "",
         type: "outbound",
-        metadata: { outcome },
+        outcome,
       })
       .select()
       .single();
