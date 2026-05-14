@@ -5,7 +5,7 @@ import { toast } from '@/components/Toaster';
 export interface VaultClient {
   id: string;
   name: string;
-  status: 'PAGADO' | 'CANCELADO';
+  status: 'PAGADO' | 'CANCELADO' | 'perdido';
   metadata: any;
   landing_url: string | null;
   board_moved_at: string | null;
@@ -20,7 +20,7 @@ export function useVault() {
     const { data, error } = await supabase
       .from('clients')
       .select('id, name, status, metadata, landing_url, board_moved_at')
-      .in('status', ['PAGADO', 'CANCELADO'])
+      .in('status', ['PAGADO', 'CANCELADO', 'perdido'])
       .order('board_moved_at', { ascending: false });
 
     if (error) {
@@ -40,7 +40,7 @@ export function useVault() {
         event: '*',
         schema: 'public',
         table: 'clients',
-        filter: `status=in.(PAGADO,CANCELADO)`,
+        filter: `status=in.(PAGADO,CANCELADO,perdido)`,
       }, () => {
         fetchClients();
       })

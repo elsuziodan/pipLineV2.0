@@ -43,7 +43,7 @@ export function VaultCard({ client, onRevertToCollection, onReactivate }: VaultC
         </div>
         
         <div className="text-[12px] text-[var(--color-text-secondary)] mt-1 flex items-center gap-2 truncate">
-          <span>{isPagado ? 'Pagado' : 'Cancelado'}: {moveDate}</span>
+          <span>{isPagado ? 'Pagado' : client.status === 'perdido' ? 'Perdido' : 'Cancelado'}: {moveDate}</span>
           {client.landing_url && (
             <>
               <span>·</span>
