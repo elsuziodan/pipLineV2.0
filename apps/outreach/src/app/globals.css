@@ -1,0 +1,258 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+@theme {
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Space Grotesk', sans-serif;
+
+  --color-ink: #111111;
+  --color-ink-soft: #555555;
+  --color-ink-muted: #999999;
+  --color-ink-accent: #D42B2B;
+  --color-ink-accent-soft: rgba(212, 43, 43, 0.08);
+
+  --color-surface: #FAFAF8;
+  --color-surface-glass: rgba(255, 255, 255, 0.72);
+  --color-surface-hover: rgba(0, 0, 0, 0.035);
+
+  --text-hero: clamp(36px, 9vw, 48px);
+  --text-name: clamp(21px, 5.5vw, 28px);
+  --text-body: clamp(13.5px, 3.2vw, 15px);
+  --text-label: 9px;
+  --text-detail: 12px;
+  --text-micro: 11px;
+}
+
+:root {
+  /* Legacy CSS vars mapping for backwards compatibility if needed */
+  --ink: var(--color-ink);
+  --ink-soft: var(--color-ink-soft);
+  --ink-muted: var(--color-ink-muted);
+  --ink-accent: var(--color-ink-accent);
+  --surface: var(--color-surface);
+  --surface-glass: var(--color-surface-glass);
+  --surface-hover: var(--color-surface-hover);
+  --t-hero: var(--text-hero);
+  --t-name: var(--text-name);
+  --t-body: var(--text-body);
+  --t-label: var(--text-label);
+  --t-detail: var(--text-detail);
+  --t-micro: var(--text-micro);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* ─── Animations ─── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes overlayEnter {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes overlayExit {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes shimmer {
+  0% { color: var(--ink); }
+  50% { color: var(--ink-accent); }
+  100% { color: var(--ink); }
+}
+
+@keyframes tapBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+  opacity: 0;
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.25s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-shimmer {
+  animation: shimmer 0.4s ease forwards;
+}
+
+.animate-tap {
+  animation: tapBounce 0.15s ease-out;
+}
+
+/* ─── Glass Panel ─── */
+
+.glass-panel {
+  background: var(--surface-glass);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 16px;
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.05),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+/* ─── Typography Utilities ─── */
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* ─── Desktop Backdrop ─── */
+.desktop-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(250, 250, 248, 0.6);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 5;
+  transition: opacity 0.3s ease;
+}
+
+.desktop-panel-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+
+/* ─── Mobile Overlay ─── */
+
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.12);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.overlay-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overlay-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 92vh;
+  z-index: 100;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: overlayEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.overlay-panel.closing {
+  animation: overlayExit 0.25s ease-in forwards;
+}
+
+.overlay-handle {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ink-muted);
+  margin: 10px auto 6px;
+  cursor: pointer;
+}
+
+/* ─── Scrollbar ─── */
+
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* ─── Selection ─── */
+
+::selection {
+  background: var(--ink-accent-soft);
+  color: var(--ink);
+}
+
+/* ─── Swipe Carousel ─── */
+
+.swipe-track {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.swipe-track.swiping {
+  touch-action: none;
+}
+
+.swipe-panel {
+  flex: 0 0 33.333%;
+  width: 33.333%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
