@@ -29,22 +29,32 @@ export interface OutreachMessage {
 export function normalizePhone(rawPhone: string | undefined): { display: string; linkBase: string; waLinkBase: string } {
   if (!rawPhone) return { display: "Sin teléfono", linkBase: "", waLinkBase: "" };
   
-  let digits = rawPhone.replace(/\D/g, "");
+  const digits = rawPhone.replace(/\D/g, "");
   if (!digits) return { display: "Sin teléfono", linkBase: "", waLinkBase: "" };
 
+  let countryCode = "52";
+  let localNumber = digits;
+
   if (digits.startsWith("521") && digits.length === 13) {
-    digits = digits.slice(3);
+    countryCode = "52";
+    localNumber = digits.slice(3);
   } else if (digits.startsWith("52") && digits.length === 12) {
-    digits = digits.slice(2);
+    countryCode = "52";
+    localNumber = digits.slice(2);
+  } else if (digits.startsWith("1") && digits.length === 11) {
+    countryCode = "1";
+    localNumber = digits.slice(1);
+  } else if (digits.length === 10) {
+    localNumber = digits;
   }
 
-  const formatted = digits.length === 10
-    ? digits.replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3")
-    : digits;
+  const formatted = localNumber.length === 10
+    ? localNumber.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3")
+    : localNumber;
 
   return {
-    display: `+52 ${formatted}`,
-    linkBase: `52${digits}`,
-    waLinkBase: `52${digits}`
+    display: `+${countryCode} ${formatted}`,
+    linkBase: `${countryCode}${localNumber}`,
+    waLinkBase: `${countryCode}${localNumber}`
   };
 }

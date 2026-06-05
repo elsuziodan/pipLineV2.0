@@ -26,7 +26,7 @@ function normalizePhone(raw: string): string {
   const digits = raw.replace(/\D/g, '');
   if (digits.length === 12 && digits.startsWith('52')) return `+${digits}`;
   if (digits.length === 10) return `+52${digits}`;
-  if (digits.length === 11 && digits.startsWith('1')) return `+52${digits.slice(1)}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`; // USA/Canada
   return '';
 }
 
